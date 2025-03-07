@@ -1,0 +1,25 @@
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[project]
+name = "kpx"
+version = "0.0.6"
+description = ""
+readme = "README.md"
+requires-python = "~3.11"
+dependencies = [
+    "cffi==1.17.1",
+    "pycparser==2.22",
+    "PyNaCl==1.5.0",
+    "pywin32==308; sys_platform == 'win32'",
+    "toml==0.10.2",
+    "websockets==15.0",
+    "notebook (>=7.3.2,<8.0.0)"
+]
+
+[project.scripts]
+kpx = "kpx.main:main"
+
+[tool.poetry]
+package-mode = true

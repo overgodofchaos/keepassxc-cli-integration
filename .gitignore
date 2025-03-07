@@ -1,0 +1,8 @@
+.venv
+temp*
+test*
+.idea
+venv.bat
+*.bat
+build
+*egg-info
