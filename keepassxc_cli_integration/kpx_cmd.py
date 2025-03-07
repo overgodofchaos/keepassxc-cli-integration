@@ -1,6 +1,6 @@
-from kpx.backend.modules import *
-from kpx.backend import dep
-from kpx.backend.queries import get_item
+from keepassxc_cli_integration.backend.modules import *
+from keepassxc_cli_integration.backend import dep
+from keepassxc_cli_integration.backend.queries import get_item
 
 
 def main():

@@ -1,4 +1,4 @@
-from kpx.backend.modules import *
+from keepassxc_cli_integration.backend.modules import *
 
 
 def write_toml(path: Path, data: dict) -> None:

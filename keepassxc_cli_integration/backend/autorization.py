@@ -1,4 +1,4 @@
-from kpx.backend.modules import *
+from keepassxc_cli_integration.backend.modules import *
 
 
 settings_path = Path().home() / ".kpx"

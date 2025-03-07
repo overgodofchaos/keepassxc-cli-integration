@@ -1,9 +1,9 @@
 import toml
 import re
-from kpx.backend import kpx_protocol
+from keepassxc_cli_integration.backend import kpx_protocol
 from pathlib import Path
 import os
-from kpx.backend import utils
+from keepassxc_cli_integration.backend import utils
 import argparse
 from argparse import Namespace
 import subprocess

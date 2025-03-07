@@ -1,5 +1,5 @@
-from kpx.backend.modules import *
-from kpx.backend import dep, autorization
+from keepassxc_cli_integration.backend.modules import *
+from keepassxc_cli_integration.backend import dep, autorization
 
 
 def get_item(url: str,

@@ -3,7 +3,7 @@ requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [project]
-name = "keepassxc-cli-integration"
+name = "keepassxc_cli_integration"
 version = "0.1.0"
 description = "CLI integration for KeepassXC GUI."
 readme = "README.md"
