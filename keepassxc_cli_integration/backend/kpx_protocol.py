@@ -134,7 +134,7 @@ class Connection:
         }]
         return True
 
-    def load_associate(self, associates):
+    def load_associates(self, associates):
         associates = associates
         for i in range(len(associates)):
             associates[i]["key"] = PublicKey(associates[i]["key"])
@@ -161,6 +161,10 @@ class Connection:
         return True
 
     def get_logins(self, url):
+        if url.startswith("https://") is False \
+                and url.startswith("http://") is False:
+            url = f"https://{url}"
+
         associates_ = self.associates
         for i in range(len(associates_)):
             # noinspection PyProtectedMember,PyTypeChecker
@@ -175,7 +179,7 @@ class Connection:
         self.send_encrypted_message(msg)
         response = self.get_encrypted_response()
         if not response["count"]:
-            return False
+            return []
         else:
             return response["entries"]
 

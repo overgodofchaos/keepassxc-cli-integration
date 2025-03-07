@@ -1,6 +1,5 @@
-from keepassxc_cli_integration.backend.modules import *
+from keepassxc_cli_integration import kpx
 from keepassxc_cli_integration.backend import dep
-from keepassxc_cli_integration.backend.queries import get_item
 
 
 def main():
@@ -9,7 +8,7 @@ def main():
         value = dep.args.value
         name = dep.args.name
 
-        value = get_item(url, value, name)
+        value = kpx.get_value(url, value, name)
 
         print(value)
 

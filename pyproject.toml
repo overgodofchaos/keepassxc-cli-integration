@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [project.scripts]
-kpx = "kpx.kpx_cmd:main"
+kpx = "keepassxc_cli_integration.kpx_cmd:main"
 
 [tool.poetry]
 package-mode = true
