@@ -1,5 +1,3 @@
-import os
-
 from kpx.backend.modules import *
 from kpx.backend import dep
 from kpx.backend.queries import get_item
@@ -8,12 +6,12 @@ from kpx.backend.queries import get_item
 def main():
     if dep.args.mode == "get":
         url = dep.args.url
-        item = dep.args.item
+        value = dep.args.value
         name = dep.args.name
 
-        item = get_item(url, item, name)
+        value = get_item(url, value, name)
 
-        print(item)
+        print(value)
 
 
 if __name__ == '__main__':

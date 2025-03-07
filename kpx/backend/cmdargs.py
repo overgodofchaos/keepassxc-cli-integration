@@ -25,7 +25,7 @@ class CmdArgsGet:
         parser = subparser
 
         parser.add_argument(
-            "item",
+            "value",
             choices=["login", "password", "both",
                      "l", "p", "b"],
             help="select item: login(l), password(p), both(b)"
