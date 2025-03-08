@@ -1,33 +1,35 @@
 from .modules import *
-from dataclasses import dataclass
 
 
 class CmdArgs:
     def __init__(self):
         self.parser = argparse.ArgumentParser()
         self.subparsers = self.parser.add_subparsers(
-            help="get: get item from kpx",
+            help="get: Get value from kpx.\n"
+                 "accosiate: Associate with current active BD or delete association.",
             dest="mode"
         )
 
-        self.get = CmdArgsGet(
-            self.subparsers.add_parser("get", help="get item from kpx"),
-        )
+        self.get = CmdArgsGet(self.subparsers)
+        self.associate = CmdArgsAssociate(self.subparsers)
 
     @classmethod
-    def get_args(cls) -> Namespace:
+    def get_args(cls) -> argparse.Namespace:
         cmdargs = cls()
         return cmdargs.parser.parse_args()
 
 
 class CmdArgsGet:
-    def __init__(self, subparser):
-        parser = subparser
+    def __init__(self, subparsers):
+        name_ = "get"
+        help_ = "get value from kpx"
+
+        parser: argparse.ArgumentParser = subparsers.add_parser(name_, help=help_)
 
         parser.add_argument(
             "value",
-            choices=["login", "password", "both",
-                     "l", "p", "b"],
+            choices=["login", "password",
+                     "l", "p"],
             help="select item: login(l), password(p), both(b)"
         )
 
@@ -50,3 +52,34 @@ class CmdArgsGet:
             required=False,
             help="escape answer for .bat scripts"
         )
+
+
+class CmdArgsAssociate:
+    def __init__(self, subparsers):
+        name_ = "associate"
+        help_ = "Associate with current active BD"
+
+        parser: argparse.ArgumentParser = subparsers.add_parser(name_, help=help_)
+
+        group = parser.add_mutually_exclusive_group()
+
+        group.add_argument(
+            "-D", "--delete",
+            help='delete association by id. Current active if specified "current" or ""',
+            required=False,
+            type=str,
+            default=None
+        )
+
+        group.add_argument(
+            "-C", "--clear",
+            help="clear all saved associations",
+            action="store_true"
+        )
+
+        group.add_argument(
+            "-S", "--show",
+            help="show all saved associations",
+            action="store_true"
+        )
+

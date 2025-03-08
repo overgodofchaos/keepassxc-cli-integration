@@ -1,3 +1,5 @@
+import shutil
+
 from keepassxc_cli_integration.backend.modules import *
 
 
@@ -6,12 +8,22 @@ settings_path.mkdir(exist_ok=True, parents=True)
 settings_file = settings_path / "settings.toml"
 
 
-def get_autorization_data() -> list[dict[str, bytes]]:
+def read_settings_text() -> dict:
+    return utils.read_text(settings_file)
+
+
+def read_settings() -> dict:
     if settings_file.exists():
         settings = utils.read_toml(settings_file)
     else:
         utils.write_toml(settings_file, {})
         settings = utils.read_toml(settings_file)
+
+    return settings
+
+
+def get_autorization_data() -> list[dict[str, bytes]]:
+    settings = read_settings()
 
     connection = kpx_protocol.Connection()
     connection.connect()
@@ -49,6 +61,51 @@ def get_autorization_data() -> list[dict[str, bytes]]:
     # noinspection PyTypeChecker
     return associates
 
+
+def delete_autorization_data(
+        db_hash: str = None,
+        id_: str = None,
+        all_: bool = False,
+        current: bool = False) -> None:
+
+    if current:
+        connection = kpx_protocol.Connection()
+        connection.connect()
+        current_hash = connection.get_databasehash()
+        delete_autorization_data(db_hash=current_hash)
+        return
+
+    if all_:
+        shutil.rmtree(settings_path)
+        return
+
+    if id_:
+        settings = read_settings()
+
+        target = None
+        for key, val in settings.items():
+            if val["id"] == id_:
+                target = key
+                break
+
+        if target:
+            settings.pop(target)
+            utils.write_toml(settings_file, settings)
+        else:
+            raise Exception(f"Association with id not found: {id_}.")
+
+        return
+
+    if db_hash:
+        settings = read_settings()
+
+        if db_hash in settings:
+            settings.pop(db_hash)
+            utils.write_toml(settings_file, settings)
+        else:
+            raise Exception(f"Association with hash not found: {db_hash}.")
+
+        return
 
 
 

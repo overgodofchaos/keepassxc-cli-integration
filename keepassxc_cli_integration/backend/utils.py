@@ -25,6 +25,11 @@ def read_toml(path: Path):
         return toml.load(f)
 
 
+def read_text(path: Path):
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
 def escape_for_bat(s: str) -> str:
     s = re.sub(r'([&|<>^%!"(){}])', r'^\1', s)
 
