@@ -61,25 +61,41 @@ class CmdArgsAssociate:
 
         parser: argparse.ArgumentParser = subparsers.add_parser(name_, help=help_)
 
-        group = parser.add_mutually_exclusive_group()
-
-        group.add_argument(
-            "-D", "--delete",
-            help='delete association by id. Current active if specified "current" or ""',
-            required=False,
+        parser.add_argument(
+            "command",
             type=str,
-            default=None
+            choices=["add", "delete", "show"],
+            nargs="?",
+            default="add",
         )
 
-        group.add_argument(
-            "-C", "--clear",
-            help="clear all saved associations",
-            action="store_true"
+        parser.add_argument(
+            "select",
+            type=str,
+            help='For delete command. "current" or "all" or associate name. Default is "current".',
+            nargs="?",
+            default="current"
         )
 
-        group.add_argument(
-            "-S", "--show",
-            help="show all saved associations",
-            action="store_true"
-        )
+        # group = parser.add_mutually_exclusive_group()
+        #
+        # group.add_argument(
+        #     "-D", "--delete",
+        #     help='delete association by id. Current active if specified "current" or ""',
+        #     required=False,
+        #     type=str,
+        #     default=None
+        # )
+        #
+        # group.add_argument(
+        #     "-C", "--clear",
+        #     help="clear all saved associations",
+        #     action="store_true"
+        # )
+        #
+        # group.add_argument(
+        #     "-S", "--show",
+        #     help="show all saved associations",
+        #     action="store_true"
+        # )
 
