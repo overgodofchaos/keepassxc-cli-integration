@@ -3,10 +3,12 @@ from .modules import *
 
 class CmdArgs:
     def __init__(self):
-        self.parser = argparse.ArgumentParser()
+        self.parser = argparse.ArgumentParser(
+            description="KeepassXC-CLI-Integration. "
+                        "Getting data from a running KeepassXC-GUI instance."
+        )
         self.subparsers = self.parser.add_subparsers(
-            help="get: Get value from kpx.\n"
-                 "accosiate: Associate with current active BD or delete association.",
+            help="Choise action.",
             dest="mode"
         )
 
@@ -22,7 +24,7 @@ class CmdArgs:
 class CmdArgsGet:
     def __init__(self, subparsers):
         name_ = "get"
-        help_ = "get value from kpx"
+        help_ = "Get value from kpx. To search for values in ALL open databases, you need to associate with each database."
 
         parser: argparse.ArgumentParser = subparsers.add_parser(name_, help=help_)
 
@@ -30,34 +32,34 @@ class CmdArgsGet:
             "value",
             choices=["login", "password",
                      "l", "p"],
-            help="select item: login(l), password(p), both(b)"
+            help="Select value: login(l), password(p), both(b)"
         )
 
         parser.add_argument(
             "url",
             type=str,
-            help="url for item in keepassxc"
+            help="URL for item in keepassxc. Can be specified without http(s)://"
         )
 
         parser.add_argument(
             "-N", "--name",
             type=str,
             required=False,
-            help="name of item (requred if one url has several items)"
+            help="Name of item (requred if one url has several items)"
         )
 
         parser.add_argument(
             "-B", "--bat", "--cmd",
             action="store_true",
             required=False,
-            help="escape answer for .bat scripts"
+            help="Escape answer for .bat scripts"
         )
 
 
 class CmdArgsAssociate:
     def __init__(self, subparsers):
         name_ = "associate"
-        help_ = "Associate with current active BD"
+        help_ = "Associate with current active BD. Association management."
 
         parser: argparse.ArgumentParser = subparsers.add_parser(name_, help=help_)
 
@@ -77,25 +79,4 @@ class CmdArgsAssociate:
             default="current"
         )
 
-        # group = parser.add_mutually_exclusive_group()
-        #
-        # group.add_argument(
-        #     "-D", "--delete",
-        #     help='delete association by id. Current active if specified "current" or ""',
-        #     required=False,
-        #     type=str,
-        #     default=None
-        # )
-        #
-        # group.add_argument(
-        #     "-C", "--clear",
-        #     help="clear all saved associations",
-        #     action="store_true"
-        # )
-        #
-        # group.add_argument(
-        #     "-S", "--show",
-        #     help="show all saved associations",
-        #     action="store_true"
-        # )
 
