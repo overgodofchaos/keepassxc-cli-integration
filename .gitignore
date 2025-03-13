@@ -6,3 +6,4 @@ venv.bat
 *.bat
 build
 *egg-info
+*dist
