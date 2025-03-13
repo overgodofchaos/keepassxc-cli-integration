@@ -53,3 +53,16 @@ $password = kpx get passoword example-vault
 
 & $VeraCrypt /volume "C:\example\vault.hc" /letter Y /password $password /b /q
 ```
+
+# INSTALLATION
+
+1. pip / pipx
+```
+pip (or pipx) install keepassxc_cli_integration
+```
+2. git
+```
+git clone https://github.com/overgodofchaos/keepassxc_cli_integration.git
+cd keepassxc_cli_integration
+pip (or pipx) install .
+```
