@@ -30,7 +30,7 @@
 
 --- 
 
-The keepassxc-cli-integration.kpx module provides similar functions for use directly in Python.
+The keepassxc_cli_integration.kpx module provides similar functions for use directly in Python.
 
 ---
 
@@ -54,7 +54,7 @@ $password = kpx get passoword example-vault
 & $VeraCrypt /volume "C:\example\vault.hc" /letter Y /password $password /b /q
 ```
 
-# INSTALLATION
+# Installation
 
 1. pip / pipx
 ```
