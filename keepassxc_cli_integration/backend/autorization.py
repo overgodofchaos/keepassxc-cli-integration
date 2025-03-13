@@ -34,6 +34,9 @@ def get_autorization_data() -> list[dict[str, bytes]]:
         id_ = associate["id"]
         public_key = associate["key"]
 
+        if id_.lower() in ["all", "current"]:
+            raise IOError(f"Prohibited name for association: {id_}")
+
         autorization_data = {
             "id": id_,
             "key": public_key.hex(),
