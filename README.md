@@ -58,11 +58,11 @@ $password = kpx get passoword example-vault
 
 1. pip / pipx
 ```
-pip (or pipx) install keepassxc_cli_integration
+pip (or pipx) install keepassxc-cli-integration
 ```
 2. git
 ```
 git clone https://github.com/overgodofchaos/keepassxc_cli_integration.git
-cd keepassxc_cli_integration
+cd keepassxc-cli-integration
 pip (or pipx) install .
 ```
