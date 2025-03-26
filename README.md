@@ -1,4 +1,4 @@
-# keepassxc_cli_integration
+# keepassxc-cli-integration
 
 
 
