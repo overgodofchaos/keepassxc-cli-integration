@@ -1,7 +1,7 @@
-from keepassxc_cli_integration.backend import kpx_protocol, autorization
+from keepassxc_cli_integration.backend import autorization, kpx_protocol
 
 
-def get_items(url: str, name: str = None) -> list[dict]:
+def get_items(url: str, name: str | None = None) -> list[dict]:
     connection = kpx_protocol.Connection()
     connection.connect()
     associates = autorization.get_autorization_data()
@@ -13,16 +13,16 @@ def get_items(url: str, name: str = None) -> list[dict]:
     items = connection.get_logins(url)
 
     if name is not None:
-        items_ = []
+        items__ = []
         for item in items:
             if item["name"] == name:
-                items_.append(item)
-        items = items_
+                items__.append(item)
+        items = items__
 
     return items
 
 
-def get_value(url: str, value: str, name: str = None) -> str:
+def get_value(url: str, value: str, name: str | None = None) -> str:
     items = get_items(url, name)
 
     if len(items) > 1:
@@ -38,8 +38,8 @@ def associate() -> None:
     autorization.get_autorization_data()
 
 
-def delete_association(db_hash: str = None,
-                       id_: str = None,
+def delete_association(db_hash: str | None = None,
+                       id_: str | None = None,
                        all_: bool = False,
                        current: bool = False) -> None:
     if current:

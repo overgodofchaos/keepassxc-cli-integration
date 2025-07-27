@@ -1,8 +1,10 @@
-from keepassxc_cli_integration import kpx
-from keepassxc_cli_integration.backend import utils, autorization
+from enum import StrEnum
+from typing import Annotated
+
 import typer
-from typing import Literal
-from enum import Enum
+
+from keepassxc_cli_integration import kpx
+from keepassxc_cli_integration.backend import autorization, utils
 
 app = typer.Typer(
     name="KeepassXC-CLI-Integration",
@@ -12,31 +14,27 @@ app = typer.Typer(
 )
 
 
-class Value(str, Enum):
+class Value(StrEnum):
     password = "password"
     login = "login"
 
 
 @app.command(
-    help="Get value from kpx. To search for values in ALL open databases, you need to associate with each database."
+    help="Get value from kpx. "
+         "To search for values in ALL open databases, "
+         "you need to associate with each database."
 )
 def get(
-        value: Value = typer.Argument(
-            ...,
-            help="Select value: login, password"),
-
-        url: str = typer.Argument(
-            ...,
-            help="URL for item in keepassxc. Can be specified without http(s)://"),
-
-        name: str = typer.Option(
-            None,
-            help="Name of item (requred if one url has several items)"),
-
-        bat: bool = typer.Option(
-            False,
-            help="Escape answer for .bat scripts")
-):
+        value: Annotated[Value, typer.Argument(...,
+                                               help="Select value: login, password")],
+        url: Annotated[str, typer.Argument(...,
+                                           help="URL for item in keepassxc. "
+                                                "Can be specified without http(s)://")],
+        name: Annotated[str, typer.Option(None,
+                                          help="Name of item (requred if one url has several items)")],
+        bat: Annotated[bool, typer.Option(False,
+                                          help="Escape answer for .bat scripts")],
+) -> None:
     try:
         result = kpx.get_value(url, value.name, name)
     except Exception as e:
@@ -60,12 +58,12 @@ app.add_typer(associate_app, name="associate")
 @associate_app.command(
     help="Add current active DB to associaties"
 )
-def add():
+def add() -> None:
     kpx.associate()
 
 
 @associate_app.callback(invoke_without_command=True)
-def associate_default():
+def associate_default() -> None:
     add()
 
 
@@ -73,10 +71,9 @@ def associate_default():
     help="Delete DB from associaties. (Default: current)"
 )
 def delete(
-        select: str = typer.Argument(
-            "current",
-            help="Accosiate name or 'current' or 'all'")
-):
+        select: Annotated[str, typer.Argument("current",
+                                              help="Accosiate name or 'current' or 'all'")]
+) -> None:
     match select:
         case "current":
             kpx.delete_association(current=True)
@@ -89,9 +86,9 @@ def delete(
 @associate_app.command(
     help="Show all associaties"
 )
-def show():
+def show() -> None:
     print(autorization.read_settings_text())
 
 
-def main():
+def main() -> None:
     app()
