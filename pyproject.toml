@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "keepassxc-cli-integration"
-version = "1.1.2"
+version = "1.2.0"
 description = "CLI integration for KeepassXC GUI."
 readme = "README.md"
 requires-python = ">=3.10"
