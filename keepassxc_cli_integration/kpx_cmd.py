@@ -25,15 +25,11 @@ class Value(StrEnum):
          "you need to associate with each database."
 )
 def get(
-        value: Annotated[Value, typer.Argument(...,
-                                               help="Select value: login, password")],
-        url: Annotated[str, typer.Argument(...,
-                                           help="URL for item in keepassxc. "
+        value: Annotated[Value, typer.Argument(help="Select value: login, password")],
+        url: Annotated[str, typer.Argument(help="URL for item in keepassxc. "
                                                 "Can be specified without http(s)://")],
-        name: Annotated[str, typer.Option(None,
-                                          help="Name of item (requred if one url has several items)")],
-        bat: Annotated[bool, typer.Option(False,
-                                          help="Escape answer for .bat scripts")],
+        name: Annotated[str | None, typer.Option(help="Name of item (requred if one url has several items)")] = None,
+        bat: Annotated[bool, typer.Option(help="Escape answer for .bat scripts")] = False,
 ) -> None:
     try:
         result = kpx.get_value(url, value.name, name)
@@ -71,8 +67,7 @@ def associate_default() -> None:
     help="Delete DB from associaties. (Default: current)"
 )
 def delete(
-        select: Annotated[str, typer.Argument("current",
-                                              help="Accosiate name or 'current' or 'all'")]
+        select: Annotated[str, typer.Argument(help="Accosiate name or 'current' or 'all'")] = "current"
 ) -> None:
     match select:
         case "current":
