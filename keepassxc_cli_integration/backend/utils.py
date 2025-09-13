@@ -1,4 +1,8 @@
-from keepassxc_cli_integration.backend.modules import *
+import os
+import re
+from pathlib import Path
+
+import toml
 
 
 def write_toml(path: Path, data: dict) -> None:
@@ -20,13 +24,13 @@ def write_toml(path: Path, data: dict) -> None:
         raise e
 
 
-def read_toml(path: Path):
-    with open(path, "r", encoding="utf-8") as f:
+def read_toml(path: Path) -> dict:
+    with open(path, encoding="utf-8") as f:
         return toml.load(f)
 
 
-def read_text(path: Path):
-    with open(path, "r", encoding="utf-8") as f:
+def read_text(path: Path) -> str:
+    with open(path, encoding="utf-8") as f:
         return f.read()
 
 

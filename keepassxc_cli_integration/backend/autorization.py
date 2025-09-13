@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 
-from . import utils
+from . import kpx_protocol, utils
 
 settings_path = Path().home() / ".keepassxc-cli-integration"
 settings_path.mkdir(exist_ok=True, parents=True)
@@ -35,7 +35,7 @@ def get_autorization_data() -> list[dict[str, bytes]]:
         public_key = associate["key"]
 
         if id_.lower() in ["all", "current"]:
-            raise IOError(f"Prohibited name for association: {id_}")
+            raise SystemError(f"Prohibited name for association: {id_}")
 
         autorization_data = {
             "id": id_,
@@ -66,8 +66,8 @@ def get_autorization_data() -> list[dict[str, bytes]]:
 
 
 def delete_autorization_data(
-        db_hash: str = None,
-        id_: str = None,
+        db_hash: str | None = None,
+        id_: str | None = None,
         all_: bool = False,
         current: bool = False) -> None:
 
@@ -109,7 +109,3 @@ def delete_autorization_data(
             raise Exception(f"Association with hash not found: {db_hash}.")
 
         return
-
-
-
-

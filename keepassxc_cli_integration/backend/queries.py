@@ -1,19 +1,9 @@
-from keepassxc_cli_integration.backend.modules import *
-from keepassxc_cli_integration.backend import dep, autorization
+from . import autorization, kpx_protocol
 
 
-def get_item(url: str,
+def get_item(url: str,  # noqa: C901
              mode: str = "password",
-             name: str = None):
-
-    modes = {
-        "password": "p",
-        "login": "l",
-        "both": "b"
-    }
-
-    if mode in modes:
-        mode = modes[mode]
+             name: str | None = None) -> str:
 
     if url.startswith("https://") is False \
             and url.startswith("http://") is False:
@@ -22,7 +12,7 @@ def get_item(url: str,
     connection = kpx_protocol.Connection()
     connection.connect()
     associates = autorization.get_autorization_data()
-    connection.load_associate(associates)
+    connection.load_associates(associates)
     connection.test_associate()
 
     items = connection.get_logins(url)
@@ -40,9 +30,9 @@ def get_item(url: str,
             names = [f"{i+1}. {names[i]}" for i in range(len(names))]
             print(names)
             names = "\n".join(names)
-            raise IOError(f"Item {url} has multiple entries. Name required.\n"
-                          f"Found names:\n"
-                          f"{names}")
+            raise SystemError(f"Item {url} has multiple entries. Name required.\n"
+                              f"Found names:\n"
+                              f"{names}")
 
         for item_ in items:
             if item_["name"] == name:
@@ -50,11 +40,14 @@ def get_item(url: str,
                 break
 
     if len(items) == 0 or item is None:
-        raise IOError(f"Item {url} not found")
+        raise SystemError(f"Item {url} not found")
 
-    if mode == "l":
-        return item["login"]
-    elif mode == "p":
-        return item["password"]
-    elif mode == "b":
-        return f"{item['login']};;;{item['password']}"
+    match mode:
+        case "login":
+            return item["login"]
+        case "password":
+            return item["password"]
+        case "both":
+            return f"{item['login']};;;{item['password']}"
+        case _:
+            raise SystemError(f"Unknown mode {mode}")

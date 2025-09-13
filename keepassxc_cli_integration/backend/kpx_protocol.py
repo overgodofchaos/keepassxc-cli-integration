@@ -1,16 +1,18 @@
 # Refer to https://github.com/keepassxreboot/keepassxc-browser/blob/develop/keepassxc-protocol.md
 import base64
-import socket
 import json
-import platform
 import os
+import platform
+import socket
 
 import nacl.utils
-from nacl.public import PrivateKey, Box, PublicKey
+from nacl.public import Box, PrivateKey, PublicKey
+
 
 if platform.system() == "Windows":
-    import win32file
     import getpass
+
+    import win32file
 
 
 class ResponseUnsuccesfulException(Exception):
