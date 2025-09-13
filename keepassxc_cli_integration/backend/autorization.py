@@ -1,7 +1,7 @@
 import shutil
+from pathlib import Path
 
-from keepassxc_cli_integration.backend.modules import *
-
+from . import utils
 
 settings_path = Path().home() / ".keepassxc-cli-integration"
 settings_path.mkdir(exist_ok=True, parents=True)
