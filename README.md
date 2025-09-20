@@ -73,7 +73,7 @@ or
 # example_2.ps1
 $VeraCrypt = "C:\Program Files\VeraCrypt\VeraCrypt.exe"
 
-kpx run $VeraCrypt /volume "C:\example\vault.hc" /letter Y /password @kpx::example-vault::password@kpx /b /q
+kpx run $VeraCrypt /volume "C:\example\vault.hc" /letter Y /password '@kpx::example-vault::password@kpx' /b /q
 ```
 
 

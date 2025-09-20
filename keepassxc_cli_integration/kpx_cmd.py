@@ -27,15 +27,16 @@ def base_options(
                         typer.Option("--env", help="Env in format ENV_NAME=env_value. Can multiple entries")] = None
 ) -> None:
     locals.debug = debug
-    for env in envs:
-        match = re.fullmatch(r".+=.+", env)
-        if not match:
-            raise SystemError(f"Incorrect env format: {env}")
+    if envs:
+        for env in envs:
+            match = re.fullmatch(r".+=.+", env)
+            if not match:
+                raise SystemError(f"Incorrect env format: {env}")
 
-        key, value = env.split("=", 1)
-        value = resolve_query(find_query(value)) if find_query(value) else value
+            key, value = env.split("=", 1)
+            value = resolve_query(find_query(value)) if find_query(value) else value
 
-        os.environ[key] = value
+            os.environ[key] = value
 
 
 
