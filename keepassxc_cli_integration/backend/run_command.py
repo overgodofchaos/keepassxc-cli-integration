@@ -5,7 +5,7 @@ from ..kpx import get_value
 
 
 def find_query(arg: str) -> str | None:
-    pattern = r"(!kpx::[^:]*::(password|login)(::[^!]+)?!)"
+    pattern = r"(@kpx::[^:]*::(password|login)(::[^!]+)?@kpx)"
 
     match = re.search(pattern, arg)
 
@@ -17,7 +17,10 @@ def find_query(arg: str) -> str | None:
 
 
 def resolve_query(query: str) -> str:
-    query = query.strip("!").replace("kpx::", "").split("::")
+    query = (query
+             .removeprefix("@kpx").removesuffix("@kpx")
+             .removeprefix("::").removesuffix("::")
+             .replace("kpx::", "").split("::"))
     url = query[0]
     item = query[1]
     name = None if len(query) == 2 else query[2]
