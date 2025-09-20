@@ -11,18 +11,22 @@
 
 ---
 - kpx
+  - base_settings:
+    - \--debug (Debug mode)
+    - \--env {{env}} (Env in format KEY=value. Can multiple entries. Supports KPX queries.)
+  - commands:
     - get
-        - login
-            - {{url}} (Get login for the specified URL from open databases.)
-        - password
-            - {{url}} (Get password for the specified URL from open databases.)
-        - \--name (Specify the name of the entry in the database. Required if the URL has multiple entries.)
-        - \--bat (Escape output to use BAT.)
+      - login
+        - {{url}} (Get login for the specified URL from open databases.)
+      - password
+        - {{url}} (Get password for the specified URL from open databases.)
+      - \--name (Specify the name of the entry in the database. Required if the URL has multiple entries.)
+      - \--bat (Escape output to use BAT.)
     - associate
-        - add (Default. Create an association with the CURRENT ACTIVE database.)
-        - delete
-            - {{select}} (Default: "current". Delete the selected association. You can specify the association name as either "all" or "current".)
-        - show (Show all saved associations.)
+      - add (Default. Create an association with the CURRENT ACTIVE database.)
+      - delete
+        - {{select}} (Default: "current". Delete the selected association. You can specify the association name as either "all" or "current".)
+      - show (Show all saved associations.)
     - run
       - {{command}} (Run another program with query from KeePassXC)
        

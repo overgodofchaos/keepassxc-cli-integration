@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from enum import StrEnum
 from typing import Annotated
@@ -8,12 +9,34 @@ import typer
 from keepassxc_cli_integration import kpx
 from keepassxc_cli_integration.backend import autorization, run_command, utils
 
+from .backend import locals
+from .backend.string_query import find_query, resolve_query
+
 app = typer.Typer(
     name="KeepassXC-CLI-Integration",
     help="Getting data from a running KeepassXC-GUI instance.",
     add_completion=False,
     no_args_is_help=True
 )
+
+
+@app.callback()
+def base_options(
+        debug: Annotated[bool, typer.Option(help="Debug mode.")] = False,
+        envs: Annotated[list[str] | None,
+                        typer.Option("--env", help="Env in format ENV_NAME=env_value. Can multiple entries")] = None
+) -> None:
+    locals.debug = debug
+    for env in envs:
+        match = re.fullmatch(r".+=.+", env)
+        if not match:
+            raise SystemError(f"Incorrect env format: {env}")
+
+        key, value = env.split("=", 1)
+        value = resolve_query(find_query(value)) if find_query(value) else value
+
+        os.environ[key] = value
+
 
 
 class Value(StrEnum):
@@ -47,7 +70,7 @@ def get(
 
 
 @app.command(help="", context_settings={"ignore_unknown_options": True})
-def run(command: Annotated[list[str], typer.Argument(..., help="List of commands to run.")]) -> None:
+def run(command: Annotated[list[str], typer.Argument(help="List of commands to run.")]) -> None:
     run_command.run(command)
 
 
@@ -92,13 +115,11 @@ def show() -> None:
     print(autorization.read_settings_text())
 
 
-
-
 def main() -> None:
     try:
         app()
     except Exception as e:
-        if os.environ.get("KPX_DEBUG") == "true":
+        if os.environ.get("KPX_DEBUG") == "true" or locals.debug:
             raise e
         else:
             print(f"{type(e).__name__}: {e}")
