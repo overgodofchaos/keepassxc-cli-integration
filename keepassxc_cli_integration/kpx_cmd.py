@@ -1,16 +1,18 @@
+import os
+import sys
 from enum import StrEnum
 from typing import Annotated
 
 import typer
 
 from keepassxc_cli_integration import kpx
-from keepassxc_cli_integration.backend import autorization, utils
+from keepassxc_cli_integration.backend import autorization, run_command, utils
 
 app = typer.Typer(
     name="KeepassXC-CLI-Integration",
     help="Getting data from a running KeepassXC-GUI instance.",
     add_completion=False,
-    no_args_is_help=True,
+    no_args_is_help=True
 )
 
 
@@ -42,6 +44,11 @@ def get(
         return
 
     print(result)
+
+
+@app.command(help="", context_settings={"ignore_unknown_options": True})
+def run(command: Annotated[list[str], typer.Argument(..., help="List of commands to run.")]) -> None:
+    run_command.run(command)
 
 
 associate_app = typer.Typer(
@@ -85,5 +92,14 @@ def show() -> None:
     print(autorization.read_settings_text())
 
 
+
+
 def main() -> None:
-    app()
+    try:
+        app()
+    except Exception as e:
+        if os.environ.get("KPX_DEBUG") == "true":
+            raise e
+        else:
+            print(f"{type(e).__name__}: {e}")
+            sys.exit(1)

@@ -38,3 +38,4 @@ def escape_for_bat(s: str) -> str:
     s = re.sub(r'([&|<>^%!"(){}])', r'^\1', s)
 
     return s
+

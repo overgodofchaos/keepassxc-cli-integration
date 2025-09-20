@@ -64,3 +64,5 @@ if __name__ == "__main__":
     print(items_)
     value_ = get_value("system-example", "password", "")
     print(value_)
+    value_ = get_value("test_url", "password", None)
+    print(value_)
