@@ -4,10 +4,11 @@ import json
 import os
 import platform
 import socket
+from collections.abc import Buffer
+from typing import Any
 
 import nacl.utils
 from nacl.public import Box, PrivateKey, PublicKey
-
 
 if platform.system() == "Windows":
     import getpass
@@ -22,8 +23,13 @@ class ResponseUnsuccesfulException(Exception):
 class WinNamedPipe:
     """ Unix socket API compatible class for accessing Windows named pipes """
 
-    def __init__(self, desired_access, creation_disposition, share_mode=0,
-                 security_attributes=None, flags_and_attributes=0, input_nullok=None):
+    def __init__(self,
+                 desired_access: int,
+                 creation_disposition: int,
+                 share_mode: int = 0,
+                 security_attributes: bool | None = None,
+                 flags_and_attributes: int = 0,
+                 input_nullok: None = None) -> None:
         self.desired_access = desired_access
         self.creation_disposition = creation_disposition
         self.share_mode = share_mode
@@ -32,10 +38,10 @@ class WinNamedPipe:
         self.input_nullok = input_nullok
         self.handle = None
 
-    def connect(self, address):
+    def connect(self, address: str) -> None:
         try:
             self.handle = win32file.CreateFile(
-                r'\\.\pipe\%s' % address,
+                fr'\\.\pipe\{address}',
                 self.desired_access,
                 self.share_mode,
                 self.security_attributes,
@@ -44,24 +50,24 @@ class WinNamedPipe:
                 self.input_nullok
             )
         except Exception as e:
-            raise Exception(
-                "Error: Connection could not be established to pipe {addr}".format(addr=address), e
+            raise Exception(  # noqa: B904
+                f"Error: Connection could not be established to pipe {address}", e
             )
 
-    def close(self):
+    def close(self) -> None:
         if self.handle:
             self.handle.close()
 
-    def sendall(self, message):
+    def sendall(self, message: str | bytes) -> None:
         win32file.WriteFile(self.handle, message)
 
-    def recv(self, buff_size):
+    def recv(self, buff_size: int) -> str:
         _, data = win32file.ReadFile(self.handle, buff_size)
         return data
 
 
 class Connection:
-    def __init__(self):
+    def __init__(self) -> None:
         self.private_key = PrivateKey.generate()
         self.public_key = self.private_key.public_key
         self.nonce = nacl.utils.random(24)
@@ -71,8 +77,9 @@ class Connection:
         else:
             self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.associates: list[dict[str, PublicKey]] | None = None
+        self.box: Box | None = None
 
-    def connect(self, path=None):
+    def connect(self, path: tuple[Any, ...] | str | Buffer | None = None) -> None:
         if path is None:
             path = Connection.get_socket_path()
 
@@ -86,7 +93,7 @@ class Connection:
         self.nonce = (int.from_bytes(self.nonce, "big") + 1).to_bytes(24, "big")
 
     @staticmethod
-    def get_socket_path():
+    def get_socket_path() -> str:
         server_name = "org.keepassxc.KeePassXC.BrowserServer"
         system = platform.system()
         if system == "Linux" and "XDG_RUNTIME_DIR" in os.environ:
@@ -98,12 +105,13 @@ class Connection:
         elif system == "Darwin" and "TMPDIR" in os.environ:
             return os.path.join(os.getenv("TMPDIR"), server_name)
         elif system == "Windows":
-            pathWin = "org.keepassxc.KeePassXC.BrowserServer_" + getpass.getuser()
-            return pathWin
+            path_win = "org.keepassxc.KeePassXC.BrowserServer_" + getpass.getuser()
+            return path_win
         else:
             return os.path.join("/tmp", server_name)
 
-    def change_public_keys(self):
+    def change_public_keys(self) -> dict[str, str | int]:
+        # noinspection PyProtectedMember
         return {
             "action": "change-public-keys",
             "publicKey": base64.b64encode(self.public_key._public_key).decode("utf-8"),
@@ -111,7 +119,7 @@ class Connection:
             "clientID": self.client_id
         }
 
-    def get_databasehash(self):
+    def get_databasehash(self) -> str:
         msg = {
             "action": "get-databasehash"
         }
@@ -119,8 +127,9 @@ class Connection:
         response = self.get_encrypted_response()
         return response["hash"]
 
-    def associate(self):
+    def associate(self) -> bool:
         id_public_key = PrivateKey.generate().public_key
+        # noinspection PyProtectedMember
         msg = {
             "action": "associate",
             "key": base64.b64encode(self.public_key._public_key).decode("utf-8"),
@@ -136,14 +145,14 @@ class Connection:
         }]
         return True
 
-    def load_associates(self, associates):
-        associates = associates
+    def load_associates(self, associates: list[dict[str, bytes]]) -> None:
+        associates_: list[dict[str, bytes | PublicKey]] = associates.copy()
         for i in range(len(associates)):
-            associates[i]["key"] = PublicKey(associates[i]["key"])
-        self.associates = associates
+            associates_[i]["key"] = PublicKey(associates[i]["key"])
+        self.associates = associates_
 
     def dump_associate(self) -> list[dict[str, bytes]]:
-        associates_ = self.associates
+        associates_ = self.associates.copy()
         for i in range(len(associates_)):
             # noinspection PyProtectedMember
             associates_[i]["key"] = associates_[i]["key"]._public_key
@@ -151,7 +160,7 @@ class Connection:
         # noinspection PyTypeChecker
         return associates_
 
-    def test_associate(self, trigger_unlock=False):
+    def test_associate(self, trigger_unlock: bool = False) -> bool:
         msg = {
             "action": "test-associate",
             "id": self.associates[0]["id"],
@@ -162,7 +171,8 @@ class Connection:
         self.get_encrypted_response()
         return True
 
-    def get_logins(self, url):
+    def get_logins(self, url: str) -> list:
+        # noinspection HttpUrlsUsage
         if url.startswith("https://") is False \
                 and url.startswith("http://") is False:
             url = f"https://{url}"
@@ -185,7 +195,7 @@ class Connection:
         else:
             return response["entries"]
 
-    def get_database_groups(self):
+    def get_database_groups(self) -> dict:
         msg = {
             "action": "get-database-groups",
         }
@@ -194,7 +204,7 @@ class Connection:
         response = self.get_encrypted_response()
         return response
 
-    def get_database_entries(self):
+    def get_database_entries(self) -> dict:
         msg = {
             "action": "get-database-entries",
         }
@@ -203,7 +213,7 @@ class Connection:
         response = self.get_encrypted_response()
         return response
 
-    def get_unencrypted_response(self):
+    def get_unencrypted_response(self) -> dict:
         data = []
         while True:
             new_data = self.socket.recv(4096)
@@ -215,7 +225,7 @@ class Connection:
                 break
         return json.loads(''.join(data))
 
-    def get_encrypted_response(self):
+    def get_encrypted_response(self) -> dict:
         raw_response = self.get_unencrypted_response()
         if "error" in raw_response:
             raise ResponseUnsuccesfulException(raw_response)
@@ -226,7 +236,7 @@ class Connection:
             raise ResponseUnsuccesfulException(raw_response)
         return response
 
-    def send_encrypted_message(self, msg, trigger_unlock=False):
+    def send_encrypted_message(self, msg: dict, trigger_unlock: bool = False) -> None:
         encrypted = base64.b64encode(self.box.encrypt(json.dumps(msg).encode("utf-8"), nonce=self.nonce).ciphertext)
         msg = {
             "action": msg["action"],
@@ -234,7 +244,7 @@ class Connection:
             "nonce": base64.b64encode(self.nonce).decode("utf-8"),
             "clientID": self.client_id
         }
-        if (trigger_unlock):
+        if trigger_unlock:
             msg['triggerUnlock'] = 'true'
         self.socket.sendall(json.dumps(msg).encode("utf-8"))
         self.nonce = (int.from_bytes(self.nonce, "big") + 1).to_bytes(24, "big")

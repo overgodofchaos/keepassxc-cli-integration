@@ -8,7 +8,7 @@ settings_path.mkdir(exist_ok=True, parents=True)
 settings_file = settings_path / "settings.toml"
 
 
-def read_settings_text() -> dict:
+def read_settings_text() -> str:
     return utils.read_text(settings_file)
 
 
