@@ -55,7 +55,20 @@ class Connection:
 
         message = message.to_bytes()
         self.socket.sendall(message)
+        self.config.increase_nonce()
         response = self.get_unencrypted_response()
+        return response
+
+    def send_encrypted(self,
+                       message: k.KPXProtocolRequest,
+                       trigger_unlock: bool = False
+                       ) -> dict:
+
+        message = k.KPXEncryptedMessageRequest(unencrypted_request=message, trigger_unlock=trigger_unlock)
+
+        self.socket.sendall(message.to_bytes())
+        self.config.increase_nonce()
+        response = self.get_encrypted_response()
         return response
 
     def connect(self, path: tuple[Any, ...] | str | Buffer | None = None) -> None:
@@ -65,7 +78,7 @@ class Connection:
         response = self.change_public_keys()
 
         self.config.box = Box(self.config.private_key, PublicKey(base64.b64decode(response.publicKey)))
-        self.config.increase_nonce()
+
 
     @staticmethod
     def get_socket_path() -> str:
@@ -91,13 +104,10 @@ class Connection:
         return response
 
 
-    def get_databasehash(self) -> str:
-        msg = {
-            "action": "get-databasehash"
-        }
-        self.send_encrypted_message(msg)
-        response = self.get_encrypted_response()
-        return response["hash"]
+    def get_databasehash(self) -> resp.GetDatabasehashResponse:
+        message = req.GetDatabasehashRequest(config=self.config)
+        response = message.send(self.send_encrypted)
+        return response
 
     def associate(self) -> bool:
         id_public_key = PrivateKey.generate().public_key
@@ -208,15 +218,4 @@ class Connection:
             raise ResponseUnsuccesfulException(raw_response)
         return response
 
-    def send_encrypted_message(self, msg: dict, trigger_unlock: bool = False) -> None:
-        encrypted = base64.b64encode(self.box.encrypt(json.dumps(msg).encode("utf-8"), nonce=self.nonce).ciphertext)
-        msg = {
-            "action": msg["action"],
-            "message": encrypted.decode("utf-8"),
-            "nonce": base64.b64encode(self.nonce).decode("utf-8"),
-            "clientID": self.client_id
-        }
-        if trigger_unlock:
-            msg['triggerUnlock'] = 'true'
-        self.socket.sendall(json.dumps(msg).encode("utf-8"))
-        self.nonce = (int.from_bytes(self.nonce, "big") + 1).to_bytes(24, "big")
+

@@ -8,3 +8,9 @@ class ChangePublicKeysResponse(KPXProtocolResponse):
     version: str
     publicKey: str
     success: Literal["true"]
+
+
+class GetDatabasehashResponse(KPXProtocolResponse):
+    action: str
+    hash: str
+    version: str

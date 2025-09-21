@@ -7,7 +7,6 @@ from .classes import KPXProtocolRequest
 # noinspection PyPep8Naming
 class ChangePublicKeysRequest(KPXProtocolRequest[responses.ChangePublicKeysResponse]):
     _action: str = PrivateAttr("change-public-keys")
-    _response: responses.ChangePublicKeysResponse = PrivateAttr(responses.ChangePublicKeysResponse)
 
     @computed_field()
     def publicKey(self) -> str:
@@ -20,3 +19,10 @@ class ChangePublicKeysRequest(KPXProtocolRequest[responses.ChangePublicKeysRespo
     @computed_field()
     def clientID(self) -> str:
         return self.config.client_id
+
+
+class GetDatabasehashRequest(KPXProtocolRequest[responses.GetDatabasehashResponse]):
+    _action: str = PrivateAttr("change-public-keys")
+
+
+
