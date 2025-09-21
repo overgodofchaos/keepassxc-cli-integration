@@ -12,6 +12,8 @@ from nacl.public import Box, PrivateKey, PublicKey
 from pydantic import ValidationError
 
 from . import classes as k
+from . import classes_requests as req
+from . import classes_responses as resp
 from . import errors
 from .connection_config import ConnectionConfig
 from .errors import ResponseUnsuccesfulException
@@ -83,8 +85,8 @@ class Connection:
         else:
             return os.path.join("/tmp", server_name)
 
-    def change_public_keys(self) -> k.ChangePublicKeysResponse:
-        message = k.ChangePublicKeysRequest(config=self.config)
+    def change_public_keys(self) -> resp.ChangePublicKeysResponse:
+        message = req.ChangePublicKeysRequest(config=self.config)
         response = message.send(self.send)
         return response
 
