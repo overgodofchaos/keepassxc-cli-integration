@@ -26,7 +26,8 @@ dependencies = [
     "toml (>=0.10.0,<1.0.0)",
     "websockets (>=15.0)",
     "typer (>=0.16.0)",
-    "click (>=8.2.1)"
+    "click (>=8.2.1)",
+    "pydantic (>=2.11.9,<3.0.0)"
 ]
 packages = [
     { include = "keepassxc_cli_integration" }

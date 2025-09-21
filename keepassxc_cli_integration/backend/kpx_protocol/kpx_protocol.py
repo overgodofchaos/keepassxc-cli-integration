@@ -10,85 +10,50 @@ from typing import Any
 import nacl.utils
 from nacl.public import Box, PrivateKey, PublicKey
 
+from . import classes as k
+from .connection_config import ConnectionConfig
+from .errors import ResponseUnsuccesfulException
+from .winpipe import WinNamedPipe
+
 if platform.system() == "Windows":
     import getpass
 
     import win32file
 
 
-class ResponseUnsuccesfulException(Exception):
-    pass
-
-
-class WinNamedPipe:
-    """ Unix socket API compatible class for accessing Windows named pipes """
-
-    def __init__(self,
-                 desired_access: int,
-                 creation_disposition: int,
-                 share_mode: int = 0,
-                 security_attributes: bool | None = None,
-                 flags_and_attributes: int = 0,
-                 input_nullok: None = None) -> None:
-        self.desired_access = desired_access
-        self.creation_disposition = creation_disposition
-        self.share_mode = share_mode
-        self.security_attributes = security_attributes
-        self.flags_and_attributes = flags_and_attributes
-        self.input_nullok = input_nullok
-        self.handle = None
-
-    def connect(self, address: str) -> None:
-        try:
-            self.handle = win32file.CreateFile(
-                fr'\\.\pipe\{address}',
-                self.desired_access,
-                self.share_mode,
-                self.security_attributes,
-                self.creation_disposition,
-                self.flags_and_attributes,
-                self.input_nullok
-            )
-        except Exception as e:
-            raise Exception(  # noqa: B904
-                f"Error: Connection could not be established to pipe {address}", e
-            )
-
-    def close(self) -> None:
-        if self.handle:
-            self.handle.close()
-
-    def sendall(self, message: str | bytes) -> None:
-        win32file.WriteFile(self.handle, message)
-
-    def recv(self, buff_size: int) -> str:
-        _, data = win32file.ReadFile(self.handle, buff_size)
-        return data
-
-
 class Connection:
     def __init__(self) -> None:
-        self.private_key = PrivateKey.generate()
-        self.public_key = self.private_key.public_key
-        self.nonce = nacl.utils.random(24)
-        self.client_id = base64.b64encode(nacl.utils.random(24)).decode("utf-8")
         if platform.system() == "Windows":
-            self.socket = WinNamedPipe(win32file.GENERIC_READ | win32file.GENERIC_WRITE, win32file.OPEN_EXISTING)
+            _socket = WinNamedPipe(win32file.GENERIC_READ | win32file.GENERIC_WRITE, win32file.OPEN_EXISTING)
         else:
-            self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.associates: list[dict[str, PublicKey]] | None = None
-        self.box: Box | None = None
+            _socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+
+        self.config = ConnectionConfig(
+            private_key=PrivateKey.generate(),
+            nonce=nacl.utils.random(24),
+            client_id=base64.b64encode(nacl.utils.random(24)).decode("utf-8"),
+            socket=_socket,
+            box=None,
+            associates=None
+        )
+
+    @property
+    def socket(self) -> WinNamedPipe | socket.socket:
+        return self.config.socket
 
     def connect(self, path: tuple[Any, ...] | str | Buffer | None = None) -> None:
         if path is None:
             path = Connection.get_socket_path()
 
         self.socket.connect(path)
-        message = json.dumps(self.change_public_keys())
-        self.socket.sendall(message.encode("utf-8"))
+
+        message = k.ChangePublicKeysRequest(config=self.config).to_bytes()
+        self.socket.sendall(message)
+
         response = self.get_unencrypted_response()
         if not response["success"]:
             raise ResponseUnsuccesfulException
+
         self.box = Box(self.private_key, PublicKey(base64.b64decode(response["publicKey"])))
         self.nonce = (int.from_bytes(self.nonce, "big") + 1).to_bytes(24, "big")
 
@@ -110,14 +75,11 @@ class Connection:
         else:
             return os.path.join("/tmp", server_name)
 
-    def change_public_keys(self) -> dict[str, str | int]:
-        # noinspection PyProtectedMember
-        return {
-            "action": "change-public-keys",
-            "publicKey": base64.b64encode(self.public_key._public_key).decode("utf-8"),
-            "nonce": base64.b64encode(self.nonce).decode("utf-8"),
-            "clientID": self.client_id
-        }
+    def change_public_keys(self) -> k.ChangePublicKeysRequest:
+        return k.ChangePublicKeysRequest(
+            publicKey=self.public_key_utf8,
+            nonce=self.nonce_utf8,
+            clientID=self.client_id)
 
     def get_databasehash(self) -> str:
         msg = {
