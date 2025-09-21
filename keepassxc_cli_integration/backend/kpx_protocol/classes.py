@@ -1,30 +1,57 @@
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from collections.abc import Callable
+from typing import Any, Generic, Literal, TypeVar
+
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError, computed_field
 
 from keepassxc_cli_integration.backend.kpx_protocol.connection_config import ConnectionConfig
 
+from . import errors
+from .errors import ResponseUnsuccesfulException
+
+R = TypeVar('R', bound="KPXProtocolResponse")
 
 class KPXProtocol(BaseModel):
     model_config = ConfigDict(
-        validate_assignment=True,
-        frozen=True
+        validate_assignment=True
     )
 
 
-class KPXProtocolRequest(KPXProtocol):
-    _action = "none"
+class KPXProtocolResponse(KPXProtocol):
+    pass
+
+
+class KPXProtocolRequest(Generic[R], KPXProtocol):
+    _action: str = PrivateAttr("none")
+    _response: type[R]
     config: ConnectionConfig = Field(exclude=True)
 
     @computed_field
     def action(self) -> str:
         return self._action
 
+    def send(self, send_function: Callable[['KPXProtocolRequest'], dict]) -> R:
+        data = send_function(self)
+
+        try:
+            return self._response.model_validate(data)
+        except ValidationError:
+            raise ResponseUnsuccesfulException(response) from errors
+
     def to_bytes(self) -> bytes:
         return self.model_dump_json().encode("utf-8")
 
 
+class ChangePublicKeysResponse(KPXProtocolResponse):
+    action: str
+    version: str
+    publicKey: str
+    success: Literal["true"]
+
+
 # noinspection PyPep8Naming
-class ChangePublicKeysRequest(KPXProtocolRequest):
-    _action = "change-public-keys"
+class ChangePublicKeysRequest(KPXProtocolRequest[ChangePublicKeysResponse]):
+    _action: str = PrivateAttr("change-public-keys")
+    _response: ChangePublicKeysResponse = PrivateAttr(ChangePublicKeysResponse)
 
     @computed_field()
     def publicKey(self) -> str:
@@ -37,6 +64,10 @@ class ChangePublicKeysRequest(KPXProtocolRequest):
     @computed_field()
     def clientID(self) -> str:
         return self.config.client_id
+
+
+def send(message: KPXProtocolRequest) -> dict:
+    pass
 
 
 if __name__ == "__main__":
@@ -68,5 +99,7 @@ if __name__ == "__main__":
     )
 
     x = ChangePublicKeysRequest(config=config)
+
+    response = x.send(send)
 
     print(x.model_dump_json(indent=2))

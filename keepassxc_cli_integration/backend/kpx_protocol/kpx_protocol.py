@@ -9,8 +9,10 @@ from typing import Any
 
 import nacl.utils
 from nacl.public import Box, PrivateKey, PublicKey
+from pydantic import ValidationError
 
 from . import classes as k
+from . import errors
 from .connection_config import ConnectionConfig
 from .errors import ResponseUnsuccesfulException
 from .winpipe import WinNamedPipe
@@ -41,21 +43,27 @@ class Connection:
     def socket(self) -> WinNamedPipe | socket.socket:
         return self.config.socket
 
+    def send(self,
+             message: k.KPXProtocolRequest,
+             path: tuple[Any, ...] | str | Buffer | None = None
+             ) -> dict:
+
+        if path is None:
+            path = Connection.get_socket_path()
+
+        message = message.to_bytes()
+        self.socket.sendall(message)
+        response = self.get_unencrypted_response()
+        return response
+
     def connect(self, path: tuple[Any, ...] | str | Buffer | None = None) -> None:
         if path is None:
             path = Connection.get_socket_path()
 
-        self.socket.connect(path)
+        response = self.change_public_keys()
 
-        message = k.ChangePublicKeysRequest(config=self.config).to_bytes()
-        self.socket.sendall(message)
-
-        response = self.get_unencrypted_response()
-        if not response["success"]:
-            raise ResponseUnsuccesfulException
-
-        self.box = Box(self.private_key, PublicKey(base64.b64decode(response["publicKey"])))
-        self.nonce = (int.from_bytes(self.nonce, "big") + 1).to_bytes(24, "big")
+        self.config.box = Box(self.config.private_key, PublicKey(base64.b64decode(response.publicKey)))
+        self.config.increase_nonce()
 
     @staticmethod
     def get_socket_path() -> str:
@@ -75,11 +83,11 @@ class Connection:
         else:
             return os.path.join("/tmp", server_name)
 
-    def change_public_keys(self) -> k.ChangePublicKeysRequest:
-        return k.ChangePublicKeysRequest(
-            publicKey=self.public_key_utf8,
-            nonce=self.nonce_utf8,
-            clientID=self.client_id)
+    def change_public_keys(self) -> k.ChangePublicKeysResponse:
+        message = k.ChangePublicKeysRequest(config=self.config)
+        response = message.send(self.send)
+        return response
+
 
     def get_databasehash(self) -> str:
         msg = {
