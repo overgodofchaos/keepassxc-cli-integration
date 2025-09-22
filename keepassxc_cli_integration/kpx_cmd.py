@@ -8,6 +8,7 @@ import typer
 
 from keepassxc_cli_integration import kpx
 from keepassxc_cli_integration.backend import run_command, utils
+from keepassxc_cli_integration.backend.settings import Settings, settings_file
 
 from .backend import locals
 from .backend.string_query import find_query, resolve_query
@@ -26,7 +27,10 @@ def base_options(
         envs: Annotated[list[str] | None,
                         typer.Option("--env", help="Env in format ENV_NAME=env_value. Can multiple entries")] = None
 ) -> None:
-    locals.debug = debug
+    if debug:
+        os.environ["KPX_DEBUG"] = "true"
+        os.environ["KPX_PROTOCOL_DEBUG"] = "true"
+
     if envs:
         for env in envs:
             match = re.fullmatch(r".+=.+", env)
@@ -82,38 +86,39 @@ associate_app = typer.Typer(
 app.add_typer(associate_app, name="associate")
 
 
-# @associate_app.command(
-#     help="Add current active DB to associaties"
-# )
-# def add() -> None:
-#     kpx.associate()
+@associate_app.command(
+    help="Add current active DB to associaties"
+)
+def add() -> None:
+    kpx.associate()
 
 
-# @associate_app.callback(invoke_without_command=True)
-# def associate_default() -> None:
-#     add()
+@associate_app.callback(invoke_without_command=True)
+def associate_default() -> None:
+    add()
 
 
-# @associate_app.command(
-#     help="Delete DB from associaties. (Default: current)"
-# )
-# def delete(
-#         select: Annotated[str, typer.Argument(help="Accosiate name or 'current' or 'all'")] = "current"
-# ) -> None:
-#     match select:
-#         case "current":
-#             kpx.delete_association(current=True)
-#         case "all":
-#             kpx.delete_association(all_=True)
-#         case _:
-#             kpx.delete_association(id_=select)
+@associate_app.command(
+    help="Delete DB from associaties. (Default: current)"
+)
+def delete(
+        select: Annotated[str, typer.Argument(help="Accosiate name or 'current' or 'all'")] = "current"
+) -> None:
+    match select:
+        case "current":
+            kpx.delete_association(current=True)
+        case "all":
+            kpx.delete_association(all_=True)
+        case _:
+            kpx.delete_association(id_=select)
 
 
 @associate_app.command(
     help="Show all associaties"
 )
 def show() -> None:
-    print(autorization.read_settings_text())
+    settings = Settings.read()
+    print(settings.associates.model_dump_json(indent=2))
 
 
 def main() -> None:

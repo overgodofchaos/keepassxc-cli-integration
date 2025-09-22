@@ -24,25 +24,23 @@ if platform.system() == "Windows":
 
     import win32file
 
+debug = lambda x: True if os.environ.get("KPX_PROTOCOL_DEBUG") else False  # noqa: E731
+
 
 class Connection:
     def __init__(self) -> None:
+
         if platform.system() == "Windows":
-            _socket = WinNamedPipe(win32file.GENERIC_READ | win32file.GENERIC_WRITE, win32file.OPEN_EXISTING)
+            self.socket = WinNamedPipe(win32file.GENERIC_READ | win32file.GENERIC_WRITE, win32file.OPEN_EXISTING)
         else:
-            _socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
         self.config = ConnectionConfig(
             private_key=PrivateKey.generate(),
             nonce=nacl.utils.random(24),
             client_id=base64.b64encode(nacl.utils.random(24)).decode("utf-8"),
-            socket=_socket,
             box=None
         )
-
-    @property
-    def socket(self) -> WinNamedPipe | socket.socket:
-        return self.config.socket
 
     def send(self,
              message: k.KPXProtocolRequest,
@@ -51,6 +49,9 @@ class Connection:
 
         if path is None:
             path = Connection.get_socket_path()
+
+        if debug:
+            print(f"Sending unencrypted message:\n{message.model_dump_json(indent=2)}\n")
 
         message = message.to_bytes()
         self.socket.sendall(message)
@@ -63,7 +64,13 @@ class Connection:
                        trigger_unlock: bool = False
                        ) -> dict:
 
+        if debug:
+            print(f"Sending encrypted message:\n{message.model_dump_json(indent=2)}\n")
+
         message = k.KPXEncryptedMessageRequest(unencrypted_request=message, trigger_unlock=trigger_unlock)
+
+        if debug:
+            print(f"{message.model_dump_json(indent=2)}\n")
 
         self.socket.sendall(message.to_bytes())
         # self.config.increase_nonce()

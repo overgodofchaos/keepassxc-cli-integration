@@ -1,4 +1,5 @@
 import base64
+import os
 from collections.abc import Callable
 from typing import Generic, TypeVar
 
@@ -9,6 +10,8 @@ from keepassxc_cli_integration.backend.kpx_protocol.connection_config import Con
 
 from . import errors
 from .errors import ResponseUnsuccesfulException
+
+debug = True if os.environ.get("KPX_PROTOCOL_DEBUG") else False
 
 R = TypeVar('R', bound="KPXProtocolResponse")
 
@@ -24,7 +27,7 @@ class KPXProtocolResponse(KPXProtocol):
     pass
 
 
-class KPXProtocolRequest(Generic[R], KPXProtocol):
+class KPXProtocolRequest(KPXProtocol, Generic[R]):
     _action: str = PrivateAttr("none")
     _response: type[R] = PrivateAttr(R)
     config: ConnectionConfig = Field(exclude=True)

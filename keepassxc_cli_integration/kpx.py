@@ -30,7 +30,7 @@ def get_items(url: str, name: str | None = None) -> list[kpx_protocol.Login]:
     return items
 
 
-def get_value(url: str, value: Literal["login", "password", "name"], name: str | None = None) -> str:
+def get_value(url: str, value: str, name: str | None = None) -> str:
     items = get_items(url, name)
 
     if len(items) > 1:
@@ -52,27 +52,29 @@ def associate() -> None:
 
 
 
-def delete_association(db_hash: str | None = None,
-                       id_: str | None = None,
-                       all_: bool = False,
-                       current: bool = False) -> None:
-
-    connection = _get_connection()
+def delete_association(
+    db_hash: str | None = None, id_: str | None = None, all_: bool = False, current: bool = False
+) -> None:
+    settings = Settings.read()
 
     if current:
-        autorization.delete_autorization_data(current=True)
+        connection = _get_connection()
+        db_hash = connection.get_databasehash().hash
+        try:
+            settings.associates.delete_by_hash(db_hash)
+            settings.write()
+        except KeyError:
+            print(f"Association for current db not found.")
         return
 
     if all_:
-        autorization.delete_autorization_data(all_=True)
-        return
-
-    if id_:
-        autorization.delete_autorization_data(id_=id_)
+        settings.associates.delete_all()
+        settings.write()
         return
 
     if db_hash:
-        autorization.delete_autorization_data(db_hash=db_hash)
+        settings.associates.delete_by_hash(db_hash)
+        settings.write()
         return
 
 

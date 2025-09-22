@@ -73,7 +73,6 @@ class ConnectionConfig(BaseModel):
     private_key: PrivateKey
     nonce: bytes
     client_id: str
-    socket: WinNamedPipe | socket.socket
     box: Box | None = None
     associates: Associates = Associates()
 
