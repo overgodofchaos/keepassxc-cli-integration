@@ -14,19 +14,15 @@ from pydantic import ValidationError
 from . import classes as k
 from . import classes_requests as req
 from . import classes_responses as resp
-from . import errors
 from .connection_config import Associate, Associates, ConnectionConfig
 from .errors import ResponseUnsuccesfulException
+from .settings import debug
 from .winpipe import WinNamedPipe
 
 if platform.system() == "Windows":
     import getpass
 
     import win32file
-
-
-def debug() -> bool:
-    return True if os.environ.get("KPX_PROTOCOL_DEBUG") else False
 
 
 class Connection:
@@ -52,7 +48,7 @@ class Connection:
         if path is None:
             path = Connection.get_socket_path()
 
-        if debug():
+        if debug:
             print(f"Sending unencrypted message:\n{message.model_dump_json(indent=2)}\n")
 
         message = message.to_bytes()
@@ -60,7 +56,7 @@ class Connection:
         # self.config.increase_nonce()
         response = self.get_unencrypted_response()
 
-        if debug():
+        if debug:
             print(f"Response:\n{json.dumps(response, indent=2)}")
 
         return response
@@ -70,19 +66,18 @@ class Connection:
                        trigger_unlock: bool = False
                        ) -> dict:
 
-        if debug():
+        if debug:
             print(f"Sending encrypted message:\n{message.model_dump_json(indent=2)}\n")
 
         message = k.KPXEncryptedMessageRequest(unencrypted_request=message, trigger_unlock=trigger_unlock)
 
-        if debug():
+        if debug:
             print(f"{message.model_dump_json(indent=2)}\n")
 
         self.socket.sendall(message.to_bytes())
-        # self.config.increase_nonce()
         response = self.get_encrypted_response()
 
-        if debug():
+        if debug:
             print(f"Response:\n{json.dumps(response, indent=2)}")
 
         return response
