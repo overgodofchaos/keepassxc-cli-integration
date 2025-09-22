@@ -1,4 +1,4 @@
-from . import autorization, kpx_protocol
+from . import kpx_protocol, settings
 
 
 def get_item(url: str,  # noqa: C901
@@ -11,7 +11,7 @@ def get_item(url: str,  # noqa: C901
 
     connection = kpx_protocol.Connection()
     connection.connect()
-    associates = autorization.get_autorization_data()
+    associates = settings.read_settings().associates
     connection.load_associates(associates)
     connection.test_associate()
 
@@ -25,7 +25,7 @@ def get_item(url: str,  # noqa: C901
     if len(items) > 1:
         if name is None:
             print(items)
-            names = [item["name"] if item["name"] != '' else "NONAME"
+            names = [item.name if item.name != '' else "NONAME"
                      for item in items]
             names = [f"{i+1}. {names[i]}" for i in range(len(names))]
             print(names)
@@ -35,7 +35,7 @@ def get_item(url: str,  # noqa: C901
                               f"{names}")
 
         for item_ in items:
-            if item_["name"] == name:
+            if item_.name == name:
                 item = item_
                 break
 
@@ -44,10 +44,8 @@ def get_item(url: str,  # noqa: C901
 
     match mode:
         case "login":
-            return item["login"]
+            return item.login
         case "password":
-            return item["password"]
-        case "both":
-            return f"{item['login']};;;{item['password']}"
+            return item.password
         case _:
             raise SystemError(f"Unknown mode {mode}")

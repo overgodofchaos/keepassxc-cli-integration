@@ -15,7 +15,8 @@ R = TypeVar('R', bound="KPXProtocolResponse")
 
 class KPXProtocol(BaseModel):
     model_config = ConfigDict(
-        validate_assignment=True
+        validate_assignment=True,
+        arbitrary_types_allowed=True,
     )
 
 

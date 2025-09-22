@@ -7,7 +7,7 @@ from typing import Annotated
 import typer
 
 from keepassxc_cli_integration import kpx
-from keepassxc_cli_integration.backend import autorization, run_command, utils
+from keepassxc_cli_integration.backend import run_command, utils
 
 from .backend import locals
 from .backend.string_query import find_query, resolve_query
@@ -82,31 +82,31 @@ associate_app = typer.Typer(
 app.add_typer(associate_app, name="associate")
 
 
-@associate_app.command(
-    help="Add current active DB to associaties"
-)
-def add() -> None:
-    kpx.associate()
+# @associate_app.command(
+#     help="Add current active DB to associaties"
+# )
+# def add() -> None:
+#     kpx.associate()
 
 
-@associate_app.callback(invoke_without_command=True)
-def associate_default() -> None:
-    add()
+# @associate_app.callback(invoke_without_command=True)
+# def associate_default() -> None:
+#     add()
 
 
-@associate_app.command(
-    help="Delete DB from associaties. (Default: current)"
-)
-def delete(
-        select: Annotated[str, typer.Argument(help="Accosiate name or 'current' or 'all'")] = "current"
-) -> None:
-    match select:
-        case "current":
-            kpx.delete_association(current=True)
-        case "all":
-            kpx.delete_association(all_=True)
-        case _:
-            kpx.delete_association(id_=select)
+# @associate_app.command(
+#     help="Delete DB from associaties. (Default: current)"
+# )
+# def delete(
+#         select: Annotated[str, typer.Argument(help="Accosiate name or 'current' or 'all'")] = "current"
+# ) -> None:
+#     match select:
+#         case "current":
+#             kpx.delete_association(current=True)
+#         case "all":
+#             kpx.delete_association(all_=True)
+#         case _:
+#             kpx.delete_association(id_=select)
 
 
 @associate_app.command(

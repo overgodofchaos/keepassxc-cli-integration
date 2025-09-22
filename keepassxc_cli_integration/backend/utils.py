@@ -34,6 +34,11 @@ def read_text(path: Path) -> str:
         return f.read()
 
 
+def write_text(path: Path, text: str) -> None:
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+
+
 def escape_for_bat(s: str) -> str:
     s = re.sub(r'([&|<>^%!"(){}])', r'^\1', s)
 

@@ -1,6 +1,7 @@
 import base64
 import socket
 from functools import cached_property
+from typing import List
 
 from nacl.public import Box, PrivateKey, PublicKey
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field, field_serializer, field_validator
@@ -43,14 +44,24 @@ class Associates(BaseModel):
         validate_assignment=True,
     )
 
-    list: list[Associate] = Field(default_factory=list)
+    entries: dict[str, Associate] = Field(default_factory=dict)
 
     def get_by_hash(self, db_hash: str) -> Associate:
-        associate: Associate = next(filter(lambda a: a.db_hash == db_hash, self.list), None)
-        if not associate:
-            raise KeyError
+        associate = self.entries[db_hash]
         return associate.model_copy(deep=True)
 
+    def delete_by_hash(self, db_hash: str) -> None:
+        del self.entries[db_hash]
+
+    def delete_all(self) -> None:
+        self.entries = {}
+
+    @property
+    def list(self) -> list[Associate]:
+        return [a.model_copy(deep=True) for a in self.entries.values()]
+
+    def add(self, db_hash: str, associate: Associate) -> None:
+        self.entries[db_hash] = associate.model_copy(deep=True)
 
 
 class ConnectionConfig(BaseModel):

@@ -115,8 +115,8 @@ class Connection:
         response = message.send(self.send_encrypted)
         db_hash = self.get_databasehash().hash
 
-        self.config.associates.list.append(
-            Associate(db_hash=db_hash, id=response.id, key=id_public_key))
+        self.config.associates.add(
+            db_hash=db_hash, associate=Associate(db_hash=db_hash, id=response.id, key=id_public_key))
 
         return True
 
