@@ -15,7 +15,7 @@ from . import classes as k
 from . import classes_requests as req
 from . import classes_responses as resp
 from . import errors
-from .connection_config import ConnectionConfig
+from .connection_config import Associate, Associates, ConnectionConfig
 from .errors import ResponseUnsuccesfulException
 from .winpipe import WinNamedPipe
 
@@ -37,8 +37,7 @@ class Connection:
             nonce=nacl.utils.random(24),
             client_id=base64.b64encode(nacl.utils.random(24)).decode("utf-8"),
             socket=_socket,
-            box=None,
-            associates=None
+            box=None
         )
 
     @property
@@ -55,7 +54,7 @@ class Connection:
 
         message = message.to_bytes()
         self.socket.sendall(message)
-        self.config.increase_nonce()
+        # self.config.increase_nonce()
         response = self.get_unencrypted_response()
         return response
 
@@ -67,7 +66,7 @@ class Connection:
         message = k.KPXEncryptedMessageRequest(unencrypted_request=message, trigger_unlock=trigger_unlock)
 
         self.socket.sendall(message.to_bytes())
-        self.config.increase_nonce()
+        # self.config.increase_nonce()
         response = self.get_encrypted_response()
         return response
 
@@ -111,89 +110,75 @@ class Connection:
 
     def associate(self) -> bool:
         id_public_key = PrivateKey.generate().public_key
-        # noinspection PyProtectedMember
-        msg = {
-            "action": "associate",
-            "key": base64.b64encode(self.public_key._public_key).decode("utf-8"),
-            "idKey": base64.b64encode(id_public_key._public_key).decode("utf-8")
-        }
 
-        self.send_encrypted_message(msg)
-        response = self.get_encrypted_response()
-        associate_id = response["id"]
-        self.associates = [{
-            "id": associate_id,
-            "key": id_public_key
-        }]
+        message = req.AssociateRequest(config=self.config, id_public_key=id_public_key)
+        response = message.send(self.send_encrypted)
+        db_hash = self.get_databasehash().hash
+
+        self.config.associates.list.append(
+            Associate(db_hash=db_hash, id=response.id, key=id_public_key))
+
         return True
 
-    def load_associates(self, associates: list[dict[str, bytes]]) -> None:
-        associates_: list[dict[str, bytes | PublicKey]] = associates.copy()
-        for i in range(len(associates)):
-            associates_[i]["key"] = PublicKey(associates[i]["key"])
-        self.associates = associates_
+    def load_associates(self, associates: Associates) -> None:
+        self.config.associates = associates.model_copy(deep=True)
 
-    def dump_associate(self) -> list[dict[str, bytes]]:
-        associates_ = self.associates.copy()
-        for i in range(len(associates_)):
-            # noinspection PyProtectedMember
-            associates_[i]["key"] = associates_[i]["key"]._public_key
-
-        # noinspection PyTypeChecker
-        return associates_
+    def dump_associate(self) -> Associates:
+        return self.config.associates.model_copy(deep=True)
 
     def test_associate(self, trigger_unlock: bool = False) -> bool:
-        msg = {
-            "action": "test-associate",
-            "id": self.associates[0]["id"],
-            "key": base64.b64encode(self.associates[0]["key"]._public_key).decode("utf-8")
-        }
+        try:
+            db_hash = self.get_databasehash().hash
+            associate = self.config.associates.get_by_hash(db_hash)
+            message = req.TestAssociateRequest(
+                config=self.config,
+                id=associate.id,
+                key=associate.key_utf8,
+            )
+            response = message.send(self.send_encrypted)
+            if response.success == "true":
+                return True
+        except KeyError:
+            pass
 
-        self.send_encrypted_message(msg, trigger_unlock)
-        self.get_encrypted_response()
-        return True
+        return False
 
-    def get_logins(self, url: str) -> list:
+    def get_logins(self, url: str) -> list[resp.Login]:
         # noinspection HttpUrlsUsage
         if url.startswith("https://") is False \
                 and url.startswith("http://") is False:
             url = f"https://{url}"
 
-        associates_ = self.associates
-        for i in range(len(associates_)):
-            # noinspection PyProtectedMember,PyTypeChecker
-            associates_[i]["key"] = base64.b64encode(associates_[i]["key"]._public_key).decode("utf-8")
+        db_hash = self.get_databasehash().hash
 
-        msg = {
-            "action": "get-logins",
-            "url": url,
-            "keys": associates_
-        }
+        message = req.GetLoginsRequest(
+            config=self.config,
+            url=url,
+            associates=self.config.associates,
+            db_hash=db_hash,
+        )
 
-        self.send_encrypted_message(msg)
-        response = self.get_encrypted_response()
-        if not response["count"]:
-            return []
-        else:
-            return response["entries"]
+        response = message.send(self.send_encrypted)
 
-    def get_database_groups(self) -> dict:
-        msg = {
-            "action": "get-database-groups",
-        }
+        return response.entries
 
-        self.send_encrypted_message(msg)
-        response = self.get_encrypted_response()
-        return response
+    # def get_database_groups(self) -> dict:
+    #     msg = {
+    #         "action": "get-database-groups",
+    #     }
+    #
+    #     self.send_encrypted_message(msg)
+    #     response = self.get_encrypted_response()
+    #     return response
 
-    def get_database_entries(self) -> dict:
-        msg = {
-            "action": "get-database-entries",
-        }
-
-        self.send_encrypted_message(msg)
-        response = self.get_encrypted_response()
-        return response
+    # def get_database_entries(self) -> dict:
+    #     msg = {
+    #         "action": "get-database-entries",
+    #     }
+    #
+    #     self.send_encrypted_message(msg)
+    #     response = self.get_encrypted_response()
+    #     return response
 
     def get_unencrypted_response(self) -> dict:
         data = []
@@ -209,13 +194,14 @@ class Connection:
 
     def get_encrypted_response(self) -> dict:
         raw_response = self.get_unencrypted_response()
+
         if "error" in raw_response:
             raise ResponseUnsuccesfulException(raw_response)
+
         server_nonce = base64.b64decode(raw_response["nonce"])
-        decrypted = self.box.decrypt(base64.b64decode(raw_response["message"]), server_nonce)
+        decrypted = self.config.box.decrypt(base64.b64decode(raw_response["message"]), server_nonce)
         response = json.loads(decrypted)
-        if not response["success"]:
-            raise ResponseUnsuccesfulException(raw_response)
+
         return response
 
 

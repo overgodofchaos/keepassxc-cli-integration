@@ -3,9 +3,54 @@ import socket
 from functools import cached_property
 
 from nacl.public import Box, PrivateKey, PublicKey
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field, field_serializer, field_validator
+from pydantic_core.core_schema import FieldSerializationInfo
 
 from .winpipe import WinNamedPipe
+
+
+class Associate(BaseModel):
+    model_config = ConfigDict(
+        validate_assignment=True,
+        arbitrary_types_allowed=True,
+    )
+
+    db_hash: str
+    id: str
+    key: PublicKey
+
+    @property
+    def key_utf8(self) -> str:
+        # noinspection PyProtectedMember
+        return base64.b64encode(self.key._public_key).decode("utf-8")
+
+    @field_serializer('key')
+    def serialize_key(self, value: PublicKey, _info: FieldSerializationInfo) -> str:
+        # noinspection PyProtectedMember
+        return value._public_key.hex()
+
+    # noinspection PyNestedDecorators
+    @field_validator('key', mode="before")
+    @classmethod
+    def parse_key(cls, value: str) -> PublicKey:
+        if isinstance(value, str):
+            value = PublicKey(bytes.fromhex(value))
+        return value
+
+
+class Associates(BaseModel):
+    model_config = ConfigDict(
+        validate_assignment=True,
+    )
+
+    list: list[Associate] = Field(default_factory=list)
+
+    def get_by_hash(self, db_hash: str) -> Associate:
+        associate: Associate = next(filter(lambda a: a.db_hash == db_hash, self.list), None)
+        if not associate:
+            raise KeyError
+        return associate.model_copy(deep=True)
+
 
 
 class ConnectionConfig(BaseModel):
@@ -19,7 +64,7 @@ class ConnectionConfig(BaseModel):
     client_id: str
     socket: WinNamedPipe | socket.socket
     box: Box | None = None
-    associates: list[dict[str, PublicKey]] | None = None
+    associates: Associates = Associates()
 
     @cached_property
     def public_key(self) -> PublicKey:

@@ -2,6 +2,7 @@ import base64
 from collections.abc import Callable
 from typing import Generic, TypeVar
 
+from nacl.public import PublicKey
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError, computed_field
 
 from keepassxc_cli_integration.backend.kpx_protocol.connection_config import ConnectionConfig
@@ -34,7 +35,7 @@ class KPXProtocolRequest(Generic[R], KPXProtocol):
 
     def send(self, send_function: Callable[['KPXProtocolRequest'], dict]) -> R:
         data = send_function(self)
-
+        self.config.increase_nonce()
         try:
             return self._response.model_validate(data)
         except ValidationError:
@@ -83,3 +84,4 @@ class KPXEncryptedMessageRequest(KPXProtocol):
 
     def to_bytes(self) -> bytes:
         return self.model_dump_json().encode("utf-8")
+
