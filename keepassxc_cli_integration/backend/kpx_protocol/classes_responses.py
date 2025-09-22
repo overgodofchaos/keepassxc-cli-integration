@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from .classes import KPXProtocolResponse
 
@@ -49,3 +49,8 @@ class GetLoginsResponse(KPXProtocolResponse):
     version: str
     entries: list[Login]
 
+    # noinspection PyNestedDecorators
+    @field_validator("count", mode="before")
+    @classmethod
+    def validate_count(cls, v: str | int) -> int:
+        return int(v)
