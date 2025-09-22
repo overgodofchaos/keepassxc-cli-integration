@@ -24,7 +24,9 @@ if platform.system() == "Windows":
 
     import win32file
 
-debug = lambda x: True if os.environ.get("KPX_PROTOCOL_DEBUG") else False  # noqa: E731
+
+def debug() -> bool:
+    return True if os.environ.get("KPX_PROTOCOL_DEBUG") else False
 
 
 class Connection:
@@ -50,13 +52,17 @@ class Connection:
         if path is None:
             path = Connection.get_socket_path()
 
-        if debug:
+        if debug():
             print(f"Sending unencrypted message:\n{message.model_dump_json(indent=2)}\n")
 
         message = message.to_bytes()
         self.socket.sendall(message)
         # self.config.increase_nonce()
         response = self.get_unencrypted_response()
+
+        if debug():
+            print(f"Response:\n{json.dumps(response, indent=2)}")
+
         return response
 
     def send_encrypted(self,
@@ -64,22 +70,28 @@ class Connection:
                        trigger_unlock: bool = False
                        ) -> dict:
 
-        if debug:
+        if debug():
             print(f"Sending encrypted message:\n{message.model_dump_json(indent=2)}\n")
 
         message = k.KPXEncryptedMessageRequest(unencrypted_request=message, trigger_unlock=trigger_unlock)
 
-        if debug:
+        if debug():
             print(f"{message.model_dump_json(indent=2)}\n")
 
         self.socket.sendall(message.to_bytes())
         # self.config.increase_nonce()
         response = self.get_encrypted_response()
+
+        if debug():
+            print(f"Response:\n{json.dumps(response, indent=2)}")
+
         return response
 
     def connect(self, path: tuple[Any, ...] | str | Buffer | None = None) -> None:
         if path is None:
             path = Connection.get_socket_path()
+
+        self.socket.connect(path)
 
         response = self.change_public_keys()
 

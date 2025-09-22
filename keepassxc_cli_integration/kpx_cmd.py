@@ -13,6 +13,11 @@ from keepassxc_cli_integration.backend.settings import Settings, settings_file
 from .backend import locals
 from .backend.string_query import find_query, resolve_query
 
+
+def debug() -> bool:
+    return True if os.environ.get("KPX_DEBUG") else False
+
+
 app = typer.Typer(
     name="KeepassXC-CLI-Integration",
     help="Getting data from a running KeepassXC-GUI instance.",
@@ -23,11 +28,11 @@ app = typer.Typer(
 
 @app.callback()
 def base_options(
-        debug: Annotated[bool, typer.Option(help="Debug mode.")] = False,
+        debug_: Annotated[bool, typer.Option("--debug/--no-debug", help="Debug mode.")] = False,
         envs: Annotated[list[str] | None,
                         typer.Option("--env", help="Env in format ENV_NAME=env_value. Can multiple entries")] = None
 ) -> None:
-    if debug:
+    if debug_:
         os.environ["KPX_DEBUG"] = "true"
         os.environ["KPX_PROTOCOL_DEBUG"] = "true"
 
@@ -94,8 +99,9 @@ def add() -> None:
 
 
 @associate_app.callback(invoke_without_command=True)
-def associate_default() -> None:
-    add()
+def associate_default(ctx: typer.Context) -> None:
+    if ctx.invoked_subcommand is None:
+        add()
 
 
 @associate_app.command(

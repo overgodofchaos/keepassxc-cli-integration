@@ -4,13 +4,14 @@ from nacl.public import Box, PrivateKey, PublicKey
 from pydantic import Field, PrivateAttr, computed_field
 
 from . import classes_responses as responses
-from .classes import KPXProtocolRequest
+from .classes import KPXProtocolRequest, KPXProtocolResponse
 from .connection_config import Associates
 
 
 # noinspection PyPep8Naming
 class ChangePublicKeysRequest(KPXProtocolRequest[responses.ChangePublicKeysResponse]):
     _action: str = PrivateAttr("change-public-keys")
+    _response = responses.ChangePublicKeysResponse
 
     @computed_field()
     def publicKey(self) -> str:
@@ -27,10 +28,12 @@ class ChangePublicKeysRequest(KPXProtocolRequest[responses.ChangePublicKeysRespo
 
 class GetDatabasehashRequest(KPXProtocolRequest[responses.GetDatabasehashResponse]):
     _action: str = PrivateAttr("get-databasehash")
+    _response = responses.GetDatabasehashResponse
 
 
 class AssociateRequest(KPXProtocolRequest[responses.AssociateResponse]):
     _action: str = PrivateAttr("associate")
+    _response = responses.AssociateResponse
     id_public_key: PublicKey = Field(exclude=True)
 
     @computed_field()
@@ -46,12 +49,14 @@ class AssociateRequest(KPXProtocolRequest[responses.AssociateResponse]):
 
 class TestAssociateRequest(KPXProtocolRequest[responses.TestAssociateResponse]):
     _action: str = PrivateAttr("test-associate")
+    _response = responses.TestAssociateResponse
     id: str
     key: str
 
 
 class GetLoginsRequest(KPXProtocolRequest[responses.GetLoginsResponse]):
     _action: str = PrivateAttr("get-logins")
+    _response = responses.GetLoginsResponse
     url: str
     associates: Associates = Field(exclude=True)
     db_hash: str = Field(exclude=True)

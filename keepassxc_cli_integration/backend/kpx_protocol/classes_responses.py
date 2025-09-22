@@ -13,9 +13,10 @@ class ChangePublicKeysResponse(KPXProtocolResponse):
 
 
 class GetDatabasehashResponse(KPXProtocolResponse):
-    action: str
     hash: str
     version: str
+    nonce: str
+    success: Literal["true"]
 
 
 class AssociateResponse(KPXProtocolResponse):
@@ -41,7 +42,7 @@ class Login(BaseModel):
 
 
 class GetLoginsResponse(KPXProtocolResponse):
-    count: str
+    count: int
     nonce: str
     success: Literal["true"]
     hash: str

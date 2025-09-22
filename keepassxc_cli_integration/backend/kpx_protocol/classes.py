@@ -1,7 +1,7 @@
 import base64
 import os
 from collections.abc import Callable
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, get_args
 
 from nacl.public import PublicKey
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError, computed_field
@@ -29,7 +29,7 @@ class KPXProtocolResponse(KPXProtocol):
 
 class KPXProtocolRequest(KPXProtocol, Generic[R]):
     _action: str = PrivateAttr("none")
-    _response: type[R] = PrivateAttr(R)
+    _response: KPXProtocolResponse = PrivateAttr(None)
     config: ConnectionConfig = Field(exclude=True)
 
     @computed_field
@@ -42,8 +42,8 @@ class KPXProtocolRequest(KPXProtocol, Generic[R]):
         self.config.increase_nonce()
         try:
             return self._response.model_validate(data)
-        except ValidationError:
-            raise ResponseUnsuccesfulException(data) from errors
+        except ValidationError as e:
+            raise ResponseUnsuccesfulException(f"{data}\n{e!s}") from Exception
 
     def to_bytes(self) -> bytes:
         return self.model_dump_json().encode("utf-8")
