@@ -134,10 +134,20 @@ class Connection:
 
         return True
 
+    def load_associates_json(self, associates_json: str) -> None:
+        """Loads associates from JSON string"""
+        self.config.associates = Associates.model_validate_json(associates_json)
+
     def load_associates(self, associates: Associates) -> None:
+        """Loads associates from Associates object"""
         self.config.associates = associates.model_copy(deep=True)
 
-    def dump_associate(self) -> Associates:
+    def dump_associate_json(self) -> str:
+        """Dumps associates to JSON string"""
+        return self.config.associates.model_dump_json()
+
+    def dump_associates(self) -> Associates:
+        """Domps associates to Associates object"""
         return self.config.associates.model_copy(deep=True)
 
     def test_associate(self, trigger_unlock: bool = False) -> bool:
