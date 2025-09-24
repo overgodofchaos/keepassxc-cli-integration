@@ -28,7 +28,7 @@
         - {{select}} (Default: "current". Delete the selected association. You can specify the association name as either "all" or "current".)
       - show (Show all saved associations.)
     - run
-      - {{command}} (Run another program with query from KeePassXC)
+      - {{command}} (Run another program with query from KeePassXC.)
        
 
 ---
@@ -49,34 +49,6 @@ The keepassxc_cli_integration.kpx module provides similar functions for use dire
 
 ---
 
-# Example
-
----
-
-The query in `kpx run` has the following format:
-`@kpx::{{url}}::{{login or password}}::{{name(optional)}}@kpx`
-```shell
-kpx run poetry publish --build --username=__token__ --password=@kpx::pypi.org::password::pypi_token@kpx
-```
-
-
-Can be used in scripts:
-```powershell
-# example.ps1
-$VeraCrypt = "C:\Program Files\VeraCrypt\VeraCrypt.exe"
-$password = kpx get passoword example-vault
-
-& $VeraCrypt /volume "C:\example\vault.hc" /letter Y /password $password /b /q
-```
-or
-```powershell
-# example_2.ps1
-$VeraCrypt = "C:\Program Files\VeraCrypt\VeraCrypt.exe"
-
-kpx run $VeraCrypt /volume "C:\example\vault.hc" /letter Y /password '@kpx::example-vault::password@kpx' /b /q
-```
-
-
 # Installation
 
 1. pip / pipx
@@ -89,3 +61,40 @@ git clone https://github.com/overgodofchaos/keepassxc_cli_integration.git
 cd keepassxc-cli-integration
 pip (or pipx) install .
 ```
+
+---
+
+# Examples
+
+---
+
+The query in `kpx run` has the following format:
+`@kpx::{{url}}::{{login or password}}::{{name(optional)}}@kpx`
+```shell
+kpx run poetry publish --build --username=__token__ --password=@kpx::pypi.org::password::pypi_token@kpx
+```
+ This is mostly for CMD, as there is no convenient way to get the result from third-party functions.
+
+
+Can be used in scripts:
+
+example.ps1
+```powershell
+$VeraCrypt = "C:\Program Files\VeraCrypt\VeraCrypt.exe"
+$password = kpx get passoword example-vault
+
+& $VeraCrypt /volume "C:\example\vault.hc" /letter Y /password $password /b /q
+```
+example2.ps1
+```powershell
+$VeraCrypt = "C:\Program Files\VeraCrypt\VeraCrypt.exe"
+
+kpx run $VeraCrypt /volume "C:\example\vault.hc" /letter Y /password $(kpx get passoword example-vault) /b /q
+```
+exemple3.bat
+```bat
+set VeraCrypt="C:\Program Files\VeraCrypt\VeraCrypt.exe"
+
+VeraCrypt /volume "C:\example\vault.hc" /letter Y /password '@kpx::example-vault::password@kpx' /b /q
+```
+
