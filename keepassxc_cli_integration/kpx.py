@@ -45,7 +45,7 @@ def get_value(url: str, value: str, name: str | None = None) -> str:
 def associate() -> None:
     connection = _get_connection()
     connection.associate()
-    associates = connection.dump_associate()
+    associates = connection.dump_associates()
     settings = Settings.read()
     settings.associates = associates
     settings.write()
