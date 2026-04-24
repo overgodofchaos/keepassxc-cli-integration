@@ -27,7 +27,8 @@ dependencies = [
     "websockets (>=15.0)",
     "typer (>=0.16.0)",
     "click (>=8.2.1)",
-    "pydantic (>=2.11.9,<3.0.0)"
+    "pydantic (>=2.11.9,<3.0.0)",
+    "keepassxc-protocol>=1.0.1",
 ]
 packages = [
     { include = "keepassxc_cli_integration", from = "src" }
