@@ -1,9 +1,9 @@
-import shutil
 from pathlib import Path
 
+import keepassxc_protocol as kpxp
 from pydantic import BaseModel
 
-from . import kpx_protocol, utils
+from . import utils
 
 settings_path = Path().home() / ".keepassxc-cli-integration"
 settings_path.mkdir(exist_ok=True, parents=True)
