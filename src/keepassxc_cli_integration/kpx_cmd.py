@@ -1,7 +1,8 @@
 import os
 import re
 import sys
-from typing import Annotated, Literal
+from enum import StrEnum
+from typing import Annotated
 
 import typer
 
@@ -49,6 +50,13 @@ def base_options(
             os.environ[key] = value
 
 
+class ValueType(StrEnum):
+    password = "password"
+    login = "login"
+    totp = "totp"
+    name_ = "name"
+
+
 @app.command(
     help="Get value from kpx. "
          "To search for values in ALL open databases, "
@@ -56,7 +64,7 @@ def base_options(
 )
 def get(
         value: Annotated[
-            Literal["password", "login", "totp", "name"],
+            ValueType,
             typer.Argument(help="Select value: login, password")],
         url: Annotated[
             str,
@@ -66,7 +74,8 @@ def get(
             typer.Option(help="Name of item (requred if one url has several items)")] = None,
 ) -> None:
     try:
-        result = kpx.get_value(url, value, name)
+        # noinspection PyTypeChecker
+        result = kpx.get_value(url, value.value, name)
     except Exception as e:  # noqa: BLE001
         print(e)
         return

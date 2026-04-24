@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "keepassxc-cli-integration"
-version = "2.0.0"
+version = "2.0.1"
 description = "CLI integration for KeepassXC GUI."
 readme = "README.md"
 license = { file = "LICENSE" }
