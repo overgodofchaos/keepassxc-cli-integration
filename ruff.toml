@@ -1,3 +1,61 @@
-lint.ignore = ["F403", "F541", "W293", "W291"]
-lint.select = ["E", "F", "W", "C90", "I", "UP", "ANN", "B", "C", "RUF", "ASYNC"]
 line-length = 120
+indent-width = 4
+target-version = "py313"
+
+[format]
+indent-style = "space"
+skip-magic-trailing-comma = false      # Always ad trailing comma in multiline collections
+line-ending = "lf"                     # Always use unix-style endings (\n)
+
+[lint]
+extend-ignore = [
+    "W293",    # Blank line contains whitespace
+    "W291",    # Trailing whitespace
+    "F541",    # f-string without placeholder (e.g. f"sometext")
+    "TD002",   # Missing author in TO DO
+    "TD003",   # Missing issue link in TO DO
+    "D100",    # Missing docstring in public module
+    "D101",    # Missing docstring in public class
+    "D102",    # Missing docstring in public method
+    "D103",    # Missing docstring in public function
+    "D104",    # Missing docstring in public package
+    "D105",    # Missing docstring in magic method
+    "D106",    # Missing docstring in public nested class
+    "D107",    # Missing docstring in __init__
+    "TRY002",  # Create you own expection
+    "TRY003",  # Avoid specifying long messages outside the exception class
+    "TC001",   # Move application import {} into a type-checking block
+    "TC002",   # Move third-party import {} into a type-checking block
+    "TC003",   # Move standard library import {} into a type-checking block
+]
+
+select = [
+    "E",      # pycodestyle errors (formatting)
+    "F",      # pyflakes (logic errors, unused vars, etc.)
+    "W",      # pycodestyle warnings
+    "D",      # pydocstyle (docstring conventions)
+    "C90",    # McCabe complexity checker
+    "I",      # isort (import sorting)
+    "UP",     # pyupgrade (modern Python syntax)
+    "ANN",    # flake8-annotations (type annotation coverage)
+    "B",      # flake8-bugbear (likely bugs and design issues)
+    "C4",     # flake8-comprehensions (better use of comprehensions)
+    "RUF",    # Ruff-specific rules
+    "ASYNC",  # Async-related issues (e.g. blocking calls in async)
+    "TCH",    # Type-checking import organization (e.g. group typing imports)
+    "PL",     # Pylint conventions and refactorings
+    "PIE",    # flake8-pie (miscellaneous clean code improvements)
+    "LOG",    # flake8-logging (logging best practices)
+    "ARG",    # flake8-unused-arguments (unused function args)
+    "TD",     # flake8-todos (TO DO/FIX ME formatting)
+    "FIX",    # flake8-fix me (FIX ME comment detection)
+    "BLE",    # flake8-blind-except (except: is too broad)
+    "COM",    # flake8-commas (missing/extra commas in sequences)
+    "ISC",    # flake8-implicit-str-concat (implicit string concatenation)
+    "ICN",    # flake8-import-conventions (non-standard import aliases)
+    "INP",    # flake8-no-pep420 (implicit namespace packages)
+    "RET",    # flake8-return (inconsistent/missing return statements)
+    "SIM",    # flake8-simplify (simplify complex expressions)
+    "TRY",    # tryceratops (modern try/except patterns)
+#    "ERA",   # eradicate (detects commented-out code)
+]

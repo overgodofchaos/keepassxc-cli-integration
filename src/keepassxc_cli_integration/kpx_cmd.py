@@ -10,7 +10,6 @@ from keepassxc_cli_integration import kpx
 from keepassxc_cli_integration.backend import run_command, utils
 from keepassxc_cli_integration.backend.settings import Settings, settings_file
 
-from .backend import locals
 from .backend.string_query import find_query, resolve_query
 
 
@@ -131,7 +130,7 @@ def main() -> None:
     try:
         app()
     except Exception as e:
-        if os.environ.get("KPX_DEBUG") == "true" or locals.debug:
+        if os.environ.get("KPX_DEBUG") == "true":
             raise e
         else:
             print(f"{type(e).__name__}: {e}")

@@ -1,9 +1,64 @@
-.venv
-temp*
-test*
+# Bite-code and cache
+*__pycache*
+*.py[cod]
+*$py.class
+*.ruff_cache
+
+# JetBrains
 .idea
-venv.bat
-*.bat
-build
-*egg-info
-*dist
+
+# Env
+env/
+.env
+venv/
+.venv/
+env.bak/
+.env.bak
+venv.bak/
+venv.bak
+
+# C extensions
+*.so
+
+# Dist and building files
+.Python
+dist/
+build/
+develop-eggs/
+*.egg-info/
+eggs/
+.eggs/
+*.egg
+
+# Temp files
+temp/
+~*
+*.tmp
+*.bak
+*.swp
+
+# Jupyter
+.ipynb_checkpoints
+
+# Logs
+*.log
+logs/
+
+# Etc
+.coverage
+.coverage.*
+.nox/
+.tox/
+nosetests.xml
+coverage.xml
+*.cache/
+*.py,cover
+.pytest_cache/
+cover/
+.hypothesis/
+__pypackages__/
+**/.ruff_cache
+
+
+# Exclude
+!**/.gitkeep

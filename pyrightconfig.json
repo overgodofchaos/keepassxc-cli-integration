@@ -1,0 +1,16 @@
+{
+  "include": ["**/*.py"],
+  "exclude": [
+    "**/__pycache__",
+    "**/node_modules",
+    "**/.git",
+    "**/.venv",
+    "**/venv",
+    "**/build",
+    "**/dist"
+  ],
+  "typeCheckingMode": "strict",
+  "reportMissingImports": "error",
+  "reportUnusedImport": "warning",
+  "pythonVersion": "3.13"
+}

@@ -1,6 +1,6 @@
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.9.9,<2.0.0"]
+build-backend = "uv_build"
 
 [project]
 name = "keepassxc-cli-integration"
@@ -8,7 +8,7 @@ version = "1.4.1"
 description = "CLI integration for KeepassXC GUI."
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.10"
+requires-python = ">=3.12,<3.15"
 authors = [
     {name = "oevergodofchaos", email = "vezonzzzzzz@gmail.com"}
 ]
@@ -30,11 +30,25 @@ dependencies = [
     "pydantic (>=2.11.9,<3.0.0)"
 ]
 packages = [
-    { include = "keepassxc_cli_integration" }
+    { include = "keepassxc_cli_integration", from = "src" }
 ]
+classifiers = [
+    "Operating System :: OS Independent"
+]
+
+[project.urls]
+Homepage = "https://github.com/overgodofchaos/keepassxc-cli-integration"
+Documentation = "https://github.com/overgodofchaos/keepassxc-cli-integration"
+Repository = "https://github.com/overgodofchaos/keepassxc-cli-integration"
 
 [project.scripts]
 kpx = "keepassxc_cli_integration.kpx_cmd:main"
 
-[tool.poetry]
-package-mode = true
+[tool.uv]
+package = true
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.409",
+    "ruff>=0.15.11",
+]
