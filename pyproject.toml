@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "keepassxc-cli-integration"
-version = "1.4.1"
+version = "2.0.0"
 description = "CLI integration for KeepassXC GUI."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -30,7 +30,8 @@ dependencies = [
     "keepassxc-protocol (>=1.1.1)",
 ]
 packages = [
-    { include = "keepassxc_cli_integration", from = "src" }
+    { include = "keepassxc_cli_integration", from = "src" },
+    { include = "keepassxc_cli_integration/py.typed", from = "src" }
 ]
 classifiers = [
     "Operating System :: OS Independent"

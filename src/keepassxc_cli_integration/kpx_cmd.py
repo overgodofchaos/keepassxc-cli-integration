@@ -1,38 +1,40 @@
 import os
 import re
 import sys
-from enum import StrEnum
-from typing import Annotated
+from typing import Annotated, Literal
 
 import typer
 
 from keepassxc_cli_integration import kpx
-from keepassxc_cli_integration.backend import run_command, utils
-from keepassxc_cli_integration.backend.settings import Settings, settings_file
+from keepassxc_cli_integration.backend import run_command
+from keepassxc_cli_integration.backend.constants import ASSOCIATE_FILE
 
 from .backend.string_query import find_query, resolve_query
 
 
 def debug() -> bool:
-    return True if os.environ.get("KPX_DEBUG") else False
+    return bool(os.environ.get("KPX_CLI_DEBUG"))
 
 
 app = typer.Typer(
     name="KeepassXC-CLI-Integration",
     help="Getting data from a running KeepassXC-GUI instance.",
     add_completion=False,
-    no_args_is_help=True
+    no_args_is_help=True,
 )
 
 
 @app.callback()
 def base_options(
-        debug_: Annotated[bool, typer.Option("--debug/--no-debug", help="Debug mode.")] = False,
-        envs: Annotated[list[str] | None,
-                        typer.Option("--env", help="Env in format ENV_NAME=env_value. Can multiple entries")] = None
+        debug_: Annotated[
+            bool,
+            typer.Option("--debug/--no-debug", help="Debug mode.")] = False,
+        envs: Annotated[
+            list[str] | None,
+            typer.Option("--env", help="Env in format ENV_NAME=env_value. Can multiple entries")] = None,
 ) -> None:
     if debug_:
-        os.environ["KPX_DEBUG"] = "true"
+        os.environ["KPX_CLI_DEBUG"] = "true"
         os.environ["KPX_PROTOCOL_DEBUG"] = "true"
 
     if envs:
@@ -42,37 +44,31 @@ def base_options(
                 raise SystemError(f"Incorrect env format: {env}")
 
             key, value = env.split("=", 1)
-            value = resolve_query(find_query(value)) if find_query(value) else value
+            value = resolve_query(x) if (x := find_query(value)) else value
 
             os.environ[key] = value
-
-
-
-class Value(StrEnum):
-    password = "password"
-    login = "login"
 
 
 @app.command(
     help="Get value from kpx. "
          "To search for values in ALL open databases, "
-         "you need to associate with each database."
+         "you need to associate with each database.",
 )
 def get(
-        value: Annotated[Value, typer.Argument(help="Select value: login, password")],
-        url: Annotated[str, typer.Argument(help="URL for item in keepassxc. "
-                                                "Can be specified without http(s)://")],
-        name: Annotated[str | None, typer.Option(help="Name of item (requred if one url has several items)")] = None,
-        bat: Annotated[bool, typer.Option(help="Escape answer for .bat scripts")] = False,
+        value: Annotated[
+            Literal["password", "login", "totp", "name"],
+            typer.Argument(help="Select value: login, password")],
+        url: Annotated[
+            str,
+            typer.Argument(help="URL for item in keepassxc. Can be specified without http(s)://")],
+        name: Annotated[
+            str | None,
+            typer.Option(help="Name of item (requred if one url has several items)")] = None,
 ) -> None:
     try:
-        result = kpx.get_value(url, value.name, name)
-    except Exception as e:
+        result = kpx.get_value(url, value, name)
+    except Exception as e:  # noqa: BLE001
         print(e)
-        return
-
-    if bat:
-        print(utils.escape_for_bat(result))
         return
 
     print(result)
@@ -85,13 +81,13 @@ def run(command: Annotated[list[str], typer.Argument(help="List of commands to r
 
 associate_app = typer.Typer(
     help="Associate with current active BD. Association management. (Default: add)",
-    no_args_is_help=False
+    no_args_is_help=False,
 )
 app.add_typer(associate_app, name="associate")
 
 
 @associate_app.command(
-    help="Add current active DB to associaties"
+    help="Add current active DB to associaties",
 )
 def add() -> None:
     kpx.associate()
@@ -104,10 +100,10 @@ def associate_default(ctx: typer.Context) -> None:
 
 
 @associate_app.command(
-    help="Delete DB from associaties. (Default: current)"
+    help="Delete DB from associaties. (Default: current)",
 )
 def delete(
-        select: Annotated[str, typer.Argument(help="Accosiate name or 'current' or 'all'")] = "current"
+        select: Annotated[str, typer.Argument(help="Accosiate name or 'current' or 'all'")] = "current",
 ) -> None:
     match select:
         case "current":
@@ -119,19 +115,18 @@ def delete(
 
 
 @associate_app.command(
-    help="Show all associaties"
+    help="Show all associaties",
 )
 def show() -> None:
-    settings = Settings.read()
-    print(settings.associates.model_dump_json(indent=2))
+    associates_json = ASSOCIATE_FILE.read_text(encoding="utf-8")
+    print(associates_json)
 
 
 def main() -> None:
     try:
         app()
     except Exception as e:
-        if os.environ.get("KPX_DEBUG") == "true":
-            raise e
-        else:
-            print(f"{type(e).__name__}: {e}")
-            sys.exit(1)
+        if os.environ.get("KPX_CLI_DEBUG") == "true":
+            raise
+        print(f"{type(e).__name__}: {e}")
+        sys.exit(1)

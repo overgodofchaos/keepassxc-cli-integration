@@ -1,123 +1,42 @@
-from pathlib import Path
+from keepassxc_protocol.models_associates import EncryptedAssociate, EncryptedAssociates
 
-import keepassxc_protocol as kpxp
-from pydantic import BaseModel
-
-from . import utils
-
-settings_path = Path().home() / ".keepassxc-cli-integration"
-settings_path.mkdir(exist_ok=True, parents=True)
-settings_file = settings_path / "settings.json"
+from .constants import ASSOCIATE_FILE, PROJECT_PATH
+from .legacy import Settings
 
 
-class Settings(BaseModel):
-    associates: kpx_protocol.Associates = kpx_protocol.Associates()
+def update_old_config() -> None:
+    #  Update from old version
+    old_settings_file = PROJECT_PATH / "settings.json"
+    if old_settings_file.exists() and not ASSOCIATE_FILE.exists():
+        try:
+            f = old_settings_file.read_text(encoding="utf-8")
+            old_settings = Settings.model_validate_json(f)
+            if old_settings.associates and old_settings.associates.entries:
+                new_associates_list: list[EncryptedAssociate] = []
 
-    @classmethod
-    def read(cls) -> "Settings":
-        return read_settings()
+                for value in old_settings.associates.entries.values():
+                    new_associates_list.append(
+                        EncryptedAssociate(
+                            db_hash=value.db_hash,
+                            id=value.id,
+                            key=f"encrypt-plaintext:{value.key}",
+                        ),
+                    )
 
-    def write(self) -> None:
-        write_settings(self)
+                new_associates = EncryptedAssociates(
+                    entries={
+                        item.db_hash: item
+                        for item in new_associates_list
+                    },
+                ).decrypt(encrypt_key="default")
 
+                new_associates_json = new_associates.dumps(
+                    encrypt_key="default",
+                    encrypt_type="system",
+                )
 
-def read_settings() -> Settings:
-    if settings_file.exists():
-        settings = Settings.model_validate_json(utils.read_text(settings_file))
-    else:
-        settings = Settings()
-
-    return settings
-
-
-def write_settings(settings: Settings) -> None:
-    utils.write_text(settings_file, settings.model_dump_json(indent=2))
-
-
-# def get_autorization_data() -> list[dict[str, bytes]]:
-#     settings = read_settings()
-#
-#     connection = kpx_protocol.Connection()
-#     connection.connect()
-#
-#     if connection.get_databasehash() not in settings:
-#         connection.associate()
-#         associate = connection.dump_associate()[0]
-#         id_ = associate["id"]
-#         public_key = associate["key"]
-#
-#         if id_.lower() in ["all", "current"]:
-#             raise SystemError(f"Prohibited name for association: {id_}")
-#
-#         autorization_data = {
-#             "id": id_,
-#             "key": public_key.hex(),
-#         }
-#
-#         settings[connection.get_databasehash()] = autorization_data
-#         utils.write_toml(settings_file, settings)
-#
-#     associates = [
-#         {
-#             "id": settings[connection.get_databasehash()]["id"],
-#             "key": bytes.fromhex(settings[connection.get_databasehash()]["key"])
-#         }
-#     ]
-#
-#     current = connection.get_databasehash()
-#
-#     for key, val in settings.items():
-#         if key != current:
-#             associates.append({
-#                 "id": val["id"],
-#                 "key": bytes.fromhex(val["key"])}
-#             )
-#
-#     # noinspection PyTypeChecker
-#     return associates
-#
-#
-# def delete_autorization_data(
-#         db_hash: str | None = None,
-#         id_: str | None = None,
-#         all_: bool = False,
-#         current: bool = False) -> None:
-#
-#     if current:
-#         connection = kpx_protocol.Connection()
-#         connection.connect()
-#         current_hash = connection.get_databasehash()
-#         delete_autorization_data(db_hash=current_hash)
-#         return
-#
-#     if all_:
-#         shutil.rmtree(settings_path)
-#         return
-#
-#     if id_:
-#         settings = read_settings()
-#
-#         target = None
-#         for key, val in settings.items():
-#             if val["id"] == id_:
-#                 target = key
-#                 break
-#
-#         if target:
-#             settings.pop(target)
-#             utils.write_toml(settings_file, settings)
-#         else:
-#             raise Exception(f"Association with id not found: {id_}.")
-#
-#         return
-#
-#     if db_hash:
-#         settings = read_settings()
-#
-#         if db_hash in settings:
-#             settings.pop(db_hash)
-#             utils.write_toml(settings_file, settings)
-#         else:
-#             raise Exception(f"Association with hash not found: {db_hash}.")
-#
-#         return
+                ASSOCIATE_FILE.write_text(new_associates_json, encoding="utf-8")
+                old_settings_file.unlink(missing_ok=True)
+                print("Config updated to new format.")
+        except Exception as e:  # noqa: BLE001
+            print(f"Error updating old config.\n{e}\nDelete it manually from ~/.keepassxc-cli-integration")

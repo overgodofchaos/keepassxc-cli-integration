@@ -1,45 +1,13 @@
-import os
-import re
-from pathlib import Path
+import keepassxc_protocol as kpxp
 
-import toml
+from .constants import ASSOCIATE_FILE
 
 
-def write_toml(path: Path, data: dict) -> None:
-    if path.exists():
-        with open(path, "rb") as f:
-            backup = f.read()
-    else:
-        backup = None
+def get_connection() -> kpxp.Connection:
+    conn = kpxp.Connection()
 
-    try:
-        with open(path, 'w', encoding="utf-8") as f:
-            f.write(toml.dumps(data))
-    except Exception as e:
-        if backup:
-            with open(path, "wb") as f:
-                f.write(backup)
-        else:
-            os.remove(path)
-        raise e
+    if ASSOCIATE_FILE.exists():
+        associate_file_data: str = ASSOCIATE_FILE.read_text(encoding="utf-8")
+        conn.load_associates_json(associate_file_data)
 
-
-def read_toml(path: Path) -> dict:
-    with open(path, encoding="utf-8") as f:
-        return toml.load(f)
-
-
-def read_text(path: Path) -> str:
-    with open(path, encoding="utf-8") as f:
-        return f.read()
-
-
-def write_text(path: Path, text: str) -> None:
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(text)
-
-
-def escape_for_bat(s: str) -> str:
-    s = re.sub(r'([&|<>^%!"(){}])', r'^\1', s)
-
-    return s
+    return conn

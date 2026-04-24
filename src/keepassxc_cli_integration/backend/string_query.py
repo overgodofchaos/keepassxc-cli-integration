@@ -9,19 +9,17 @@ def find_query(arg: str) -> str | None:
     match = re.search(pattern, arg)
 
     if match:
-        query = match.group(0)
-        return query
-    else:
-        return None
+        return match.group(0)
+    return None
 
 
 def resolve_query(query: str) -> str:
-    query = (query
-             .removeprefix("@kpx").removesuffix("@kpx")
-             .removeprefix("::").removesuffix("::")
-             .replace("kpx::", "").split("::"))
-    url = query[0]
-    item = query[1]
-    name = None if len(query) == 2 else query[2]
+    query_ = (query
+              .removeprefix("@kpx").removesuffix("@kpx")
+              .removeprefix("::").removesuffix("::")
+              .replace("kpx::", "").split("::"))
+    url = query_[0]
+    item = query_[1]
+    name = None if len(query_) == 2 else query_[2]  # noqa: PLR2004
 
     return get_value(url, item, name)

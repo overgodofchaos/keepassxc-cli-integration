@@ -8,10 +8,10 @@ def run(command: list[str]) -> None:
     args = command[1:]
 
     args = [
-        arg.replace(find_query(arg), resolve_query(find_query(arg))) if find_query(arg) else arg
+        arg.replace(x, resolve_query(x)) if (x := find_query(arg)) else arg
         for arg in args
     ]
 
-    subprocess.run(
-        [program, *args]
+    subprocess.run(  # noqa: PLW1510
+        [program, *args],
     )

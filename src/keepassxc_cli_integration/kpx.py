@@ -1,36 +1,37 @@
 from typing import Literal
 
-from keepassxc_cli_integration.backend import kpx_protocol
-from keepassxc_cli_integration.backend.settings import Settings
+import keepassxc_protocol as kpxp
+from pydantic import validate_call
+
+from .backend.constants import ASSOCIATE_FILE
+from .backend.utils import get_connection
 
 
-def _get_connection() -> kpx_protocol.Connection:
-    connection = kpx_protocol.Connection()
-    connection.connect()
-    associates = Settings.read().associates
-    connection.load_associates(associates)
-    return connection
-
-
-def get_items(url: str, name: str | None = None) -> list[kpx_protocol.Login]:
-    connection = _get_connection()
+@validate_call
+def get_items(url: str, name: str | None = None) -> list[kpxp.Login]:
+    connection = get_connection()
 
     if not connection.test_associate():
         raise Exception("Failed to load associates")
 
     items = connection.get_logins(url)
 
-    if name is not None:
-        items__ = []
-        for item in items:
+    if name:
+        filtered_items: list[kpxp.Login] = []
+        for item in items.entries:
             if item.name == name:
-                items__.append(item)
-        items = items__
+                filtered_items.append(item)
+        return filtered_items
 
-    return items
+    return items.entries
 
 
-def get_value(url: str, value: str, name: str | None = None) -> str:
+@validate_call
+def get_value(
+        url: str,
+        value: Literal["password", "login", "totp", "name"],
+        name: str | None = None,
+) -> str:
     items = get_items(url, name)
 
     if len(items) > 1:
@@ -43,45 +44,54 @@ def get_value(url: str, value: str, name: str | None = None) -> str:
 
 
 def associate() -> None:
-    connection = _get_connection()
+    connection = get_connection()
     connection.associate()
-    associates = connection.dump_associates()
-    settings = Settings.read()
-    settings.associates = associates
-    settings.write()
+    associates_json = connection.dump_associate_json()
+    ASSOCIATE_FILE.write_text(associates_json, encoding="utf-8")
 
 
-
+@validate_call
 def delete_association(
-    db_hash: str | None = None, id_: str | None = None, all_: bool = False, current: bool = False
+    db_hash: str | None = None,
+    all_: bool = False,
+    id_: str | None = None,
+    current: bool = False,
 ) -> None:
-    settings = Settings.read()
 
     if current:
-        connection = _get_connection()
+        connection = get_connection()
         db_hash = connection.get_databasehash().hash
         try:
-            settings.associates.delete_by_hash(db_hash)
-            settings.write()
+            connection.session.associates.delete_by_hash(db_hash)
+            associates_json = connection.dump_associate_json()
+            ASSOCIATE_FILE.write_text(associates_json, encoding="utf-8")
         except KeyError:
             print(f"Association for current db not found.")
         return
 
     if all_:
-        settings.associates.delete_all()
-        settings.write()
+        connection = get_connection()
+        connection.session.associates.delete_all()
+        associates_json = connection.dump_associate_json()
+        ASSOCIATE_FILE.write_text(associates_json, encoding="utf-8")
         return
 
     if db_hash:
-        settings.associates.delete_by_hash(db_hash)
-        settings.write()
+        connection = get_connection()
+        connection.session.associates.delete_by_hash(db_hash)
+        associates_json = connection.dump_associate_json()
+        ASSOCIATE_FILE.write_text(associates_json, encoding="utf-8")
         return
 
+    if id_:
+        connection = get_connection()
+        associates = connection.session.associates
+        target: str | None = None
+        for key, value in associates.entries.items():
+            if value.id == id_:
+                target = key
+                break
 
-if __name__ == "__main__":
-    items_ = get_items("system-example")
-    print(items_)
-    value_ = get_value("system-example", "password", "")
-    print(value_)
-    value_ = get_value("test_url", "password", None)
-    print(value_)
+        if target:
+            associates.delete_by_hash(target)
+        return

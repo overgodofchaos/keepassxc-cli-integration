@@ -21,7 +21,6 @@
       - password
         - {{url}} (Get password for the specified URL from open databases.)
       - \--name (Specify the name of the entry in the database. Required if the URL has multiple entries.)
-      - \--bat (Escape output to use BAT.)
     - associate
       - add (Default. Create an association with the CURRENT ACTIVE database.)
       - delete
@@ -67,6 +66,12 @@ pip (or pipx) install .
 # Examples
 
 ---
+
+Powershell.
+```powershell
+kpx run poetry publish --build --username=__token__ --password=(kpx get password pypi.org --name pypi_token)
+```
+
 
 The query in `kpx run` has the following format:
 `@kpx::{{url}}::{{login or password}}::{{name(optional)}}@kpx`
