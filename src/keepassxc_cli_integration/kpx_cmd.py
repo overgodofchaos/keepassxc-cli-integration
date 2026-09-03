@@ -66,11 +66,7 @@ def get(
             str | None,
             typer.Option(help="Name of item (requred if one url has several items)")] = None,
 ) -> None:
-    try:
-        result = kpx.get_value(url, value, name)
-    except Exception as e:  # noqa: BLE001
-        print(e)
-        return
+    result = kpx.get_value(url, value, name)
 
     print(result)
 
