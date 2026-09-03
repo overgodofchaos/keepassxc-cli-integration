@@ -73,13 +73,8 @@ def get(
             str | None,
             typer.Option(help="Name of item (requred if one url has several items)")] = None,
 ) -> None:
-    try:
-        # noinspection PyTypeChecker
-        result = kpx.get_value(url, value.value, name)
-    except Exception as e:  # noqa: BLE001
-        print(e)
-        return
-
+    # noinspection PyTypeChecker
+    result = kpx.get_value(url, value.value, name)
     print(result)
 
 
