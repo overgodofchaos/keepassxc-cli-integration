@@ -4,6 +4,7 @@ import keepassxc_protocol as kpxp
 from pydantic import validate_call
 
 from .backend.constants import ASSOCIATE_FILE
+from .backend.general import ValueType
 from .backend.utils import get_connection
 
 
@@ -29,7 +30,7 @@ def get_items(url: str, name: str | None = None) -> list[kpxp.Login]:
 @validate_call
 def get_value(
         url: str,
-        value: Literal["password", "login", "totp", "name"],
+        value: ValueType,
         name: str | None = None,
 ) -> str:
     items = get_items(url, name)

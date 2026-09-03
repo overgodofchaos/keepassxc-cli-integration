@@ -1,7 +1,6 @@
 import os
 import re
 import sys
-from enum import StrEnum
 from typing import Annotated
 
 import typer
@@ -10,6 +9,7 @@ from keepassxc_cli_integration import kpx
 from keepassxc_cli_integration.backend import run_command
 from keepassxc_cli_integration.backend.constants import ASSOCIATE_FILE
 
+from .backend.general import ValueType
 from .backend.string_query import find_query, resolve_query
 
 
@@ -50,13 +50,6 @@ def base_options(
             os.environ[key] = value
 
 
-class ValueType(StrEnum):
-    password = "password"
-    login = "login"
-    totp = "totp"
-    name_ = "name"
-
-
 @app.command(
     help="Get value from kpx. "
          "To search for values in ALL open databases, "
@@ -74,8 +67,7 @@ def get(
             typer.Option(help="Name of item (requred if one url has several items)")] = None,
 ) -> None:
     try:
-        # noinspection PyTypeChecker
-        result = kpx.get_value(url, value.value, name)
+        result = kpx.get_value(url, value, name)
     except Exception as e:  # noqa: BLE001
         print(e)
         return
