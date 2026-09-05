@@ -1,3 +1,4 @@
+import json
 from typing import Literal
 
 import keepassxc_protocol as kpxp
@@ -44,10 +45,19 @@ def get_value(
 
 
 def associate() -> None:
-    connection = get_connection()
+    connection = kpxp.Connection()
     connection.associate()
-    associates_json = connection.dump_associate_json()
-    ASSOCIATE_FILE.write_text(associates_json, encoding="utf-8")
+    associates_json: dict[str, dict[str, str]] = json.loads(connection.dump_associate_json())
+
+    data: dict[str, dict[str, str]] =(
+        json.loads(ASSOCIATE_FILE.read_text(encoding="utf-8"))) \
+        if ASSOCIATE_FILE.exists() \
+        else {"entries": {}}
+
+    data["entries"] = data["entries"] | associates_json["entries"]
+    new_associates_json: str = json.dumps(data, indent=2)
+
+    ASSOCIATE_FILE.write_text(new_associates_json, encoding="utf-8")
 
 
 @validate_call
